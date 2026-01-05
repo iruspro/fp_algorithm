@@ -1,3 +1,6 @@
 (library
  (name fp_algorithm)
- (libraries zarith))
+ (libraries zarith)
+ (inline_tests)
+ (preprocess
+  (pps ppx_expect)))
