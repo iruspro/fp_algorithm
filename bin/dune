@@ -1,0 +1,4 @@
+(executable
+ (public_name fp_algorithm)
+ (name main)
+ (libraries fp_algorithm))
