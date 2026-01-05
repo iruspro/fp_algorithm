@@ -1,6 +1,6 @@
 type t = Q.t list (* [q_n, ..., q_1, q_0] *)
 
-let zero n = List.init n (fun _ -> Q.zero)
+let zero dim = List.init (succ dim) (fun _ -> Q.zero)
 
 let eval (expr : t) (point : Point.t) =
   let rec aux acc = function
