@@ -28,3 +28,30 @@ let sub_last (expr1 : t) (expr2 : t) : t =
   List.rev substituted
 
 let mul_by c = List.map (fun q -> Q.mul c q)
+
+(* Tests *)
+
+(* zero *)
+let%test "zero" = zero 0 = [ Q.zero ] && zero 2 = [ Q.zero; Q.zero; Q.zero ]
+
+(* eval *)
+let%test "eval" =
+  let expr1 = zero 5
+  and point1 = List.init 5 (fun _ -> Q.of_int (Random.full_int 100)) in
+  let expr2 = [ Q.of_int 1; Q.of_int 1 ] and point2 = [ Q.of_int 9 ] in
+  let expr3 = [ Q.of_int 0; Q.of_int 10 ]
+  and point3 = List.init 1 (fun _ -> Q.of_int (Random.full_int 100)) in
+  eval expr1 point1 = Q.zero
+  && eval expr2 point2 = Q.of_int 10
+  && eval expr3 point3 = Q.of_int 10
+
+(* sub_last *)
+let%test "sub_last" =
+  let expr1 = [ Q.of_int 5; Q.of_int 2; Q.of_int 1 ]
+  and expr2 = [ Q.of_int 1; Q.of_int 2; Q.of_int 5 ] in
+  sub_last expr1 expr2 = [ Q.of_int 5; Q.of_int 12; Q.of_int 26 ]
+
+(* mul_by *)
+let%test "mul_by" =
+  let expr = [ Q.of_int 1; Q.of_int 2; Q.of_int 3 ] in
+  mul_by (Q.of_int 10) expr = [ Q.of_int 10; Q.of_int 20; Q.of_int 30 ]
