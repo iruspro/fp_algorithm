@@ -197,7 +197,8 @@ let%test "is_satisfied always true" =
       and rhs = List.init (succ dim) (fun _ -> Q.of_int 1) in
       let points =
         List.init n_cases (fun _ ->
-            List.init dim (fun _ -> Q.of_int (Random.full_int 100)))
+            Point.from_array
+              (Array.init dim (fun _ -> Q.of_int (Random.full_int 100))))
       in
       result :=
         aux true dim lhs rhs GreaterThan points
@@ -213,7 +214,7 @@ let%test "is_satisfied equals" =
   let dim = 2 in
   let lhs = [ Q.of_int 3; Q.of_int 2; Q.of_int 3 ]
   and zero = Lin_expr.zero dim
-  and point = Point.from_list [ Q.of_int 0; Q.of_int (-1) ] in
+  and point = Point.from_array [| Q.of_int 0; Q.of_int (-1) |] in
   is_satisfied (construct dim lhs zero LessEqual) point
   && is_satisfied (construct dim lhs zero GreaterEqual) point
   && (not (is_satisfied (construct dim lhs zero LessThan) point))
@@ -245,7 +246,7 @@ let%test "find_unsatisfied success" =
         (List.init (succ dim) (fun _ -> Q.of_int (-1)))
         zero GreaterThan;
     ]
-  and point = Point.from_list [ Q.of_int 1; Q.of_int 1 ] in
+  and point = Point.from_array [| Q.of_int 1; Q.of_int 1 |] in
   let res = find_unsatisfied ineqs point in
   match res with None -> false | Some ineq -> true && lhs ineq = lhs fail
 
@@ -270,7 +271,7 @@ let%test "find_unsatisfied fail" =
         (List.init (succ dim) (fun _ -> Q.of_int (-1)))
         zero LessThan;
     ]
-  and point = Point.from_list [ Q.of_int 1; Q.of_int 1 ] in
+  and point = Point.from_array [| Q.of_int 1; Q.of_int 1 |] in
   let res = find_unsatisfied ineqs point in
   match res with None -> true | Some _ -> false
 

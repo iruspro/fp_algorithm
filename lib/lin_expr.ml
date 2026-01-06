@@ -2,14 +2,14 @@ type t = Q.t list (* [q_n; ...; q_1; q_0] *)
 
 let zero dim : t = List.init (succ dim) (fun _ -> Q.zero)
 
-let eval (expr : t) (point : Point.t) =
+let eval (expr : t) point =
   let rec aux acc = function
     | [ q_0 ], [] -> Q.add acc q_0
     | _, [] | [], _ ->
         failwith "Point and linear expression have different dimensions"
     | q :: qs, r :: rs -> aux (Q.add acc (Q.mul q r)) (qs, rs)
   in
-  aux Q.zero (expr, point)
+  aux Q.zero (expr, Point.as_list point)
 
 let sub_last (expr1 : t) (expr2 : t) : t =
   let rec aux acc q_n = function
@@ -50,13 +50,17 @@ let%test "zero" = zero 2 = [ Q.zero; Q.zero; Q.zero ]
 let%test "eval" =
   (* 0 at random point *)
   let expr1 = zero 5
-  and point1 = List.init 5 (fun _ -> Q.of_int (Random.full_int 100)) in
+  and point1 =
+    Point.from_array (Array.init 5 (fun _ -> Q.of_int (Random.full_int 100)))
+  in
   (* y + 2x + 3 at (2; 10)*)
   let expr2 = [ Q.of_int 1; Q.of_int 2; Q.of_int 3 ]
-  and point2 = Point.from_list [ Q.of_int 2; Q.of_int 10 ] in
+  and point2 = Point.from_array [| Q.of_int 2; Q.of_int 10 |] in
   (* 0*x + 10 at random point *)
   let expr3 = [ Q.of_int 0; Q.of_int 10 ]
-  and point3 = List.init 1 (fun _ -> Q.of_int (Random.full_int 100)) in
+  and point3 =
+    Point.from_array (Array.init 1 (fun _ -> Q.of_int (Random.full_int 100)))
+  in
   eval expr1 point1 = Q.zero
   && eval expr2 point2 = Q.of_int 17
   && eval expr3 point3 = Q.of_int 10
