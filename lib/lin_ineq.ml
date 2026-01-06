@@ -18,7 +18,7 @@ let change_rel = function
   | LessThan -> GreaterThan
   | LessEqual -> GreaterEqual
   | GreaterThan -> LessThan
-  | GreaterEqual -> GreaterThan
+  | GreaterEqual -> LessEqual
 
 let rel_to_n_type = function
   | LessThan -> LastLessThan
@@ -89,6 +89,83 @@ let negate ineq =
   { ineq with rel; n_type }
 
 (* Tests *)
+(* construct *)
+let%test "construct 1 dim" =
+  let ineq = construct 1 [ Q.one ] [ Q.zero ] LessThan in
+  n_type ineq = WithoutLast && rel ineq = LessThan
+
+let%test "construct n dim WithoutLast" =
+  let ineq1 (* 5y + 3x + 2 > 5y + 2x + 1 -> 3x + 2 > 2x + 1 *) =
+    construct 2
+      [ Q.of_int 5; Q.of_int 3; Q.of_int 2 ]
+      [ Q.of_int 5; Q.of_int 2; Q.of_int 1 ]
+      GreaterThan
+  and ineq2 (* 0*y + 3x + 2 > 2x + 1 -> 0*y + 3x + 2 > 2x + 1 *) =
+    construct 2
+      [ Q.of_int 0; Q.of_int 3; Q.of_int 2 ]
+      [ Q.of_int 0; Q.of_int 2; Q.of_int 1 ]
+      GreaterThan
+  in
+  List.hd (lhs ineq1) = Q.zero
+  && List.hd (rhs ineq1) = Q.zero
+  && n_type ineq1 = WithoutLast
+  && List.hd (lhs ineq2) = Q.zero
+  && List.hd (rhs ineq2) = Q.zero
+  && n_type ineq2 = WithoutLast
+
+let%test "construct n dim Last_ without change rel" =
+  (* 6y + 3x + 2 V 5y + 2x + 1 -> y V -x - 1  *)
+  let rels = [| LessThan; LessEqual; GreaterThan; GreaterEqual |]
+  and n_types =
+    [| LastLessThan; LastLessEqual; LastGreaterThan; LastGreaterEqual |]
+  in
+  let result = ref true in
+  let _ =
+    for i = 0 to Array.length rels - 1 do
+      let rel_ = rels.(i) and n_type_ = n_types.(i) in
+      let ineq =
+        construct 2
+          [ Q.of_int 6; Q.of_int 3; Q.of_int 2 ]
+          [ Q.of_int 5; Q.of_int 2; Q.of_int 1 ]
+          rel_
+      in
+      result :=
+        !result
+        && lhs ineq = [ Q.one; Q.zero; Q.zero ]
+        && rhs ineq = [ Q.zero; Q.of_int (-1); Q.of_int (-1) ]
+        && rel ineq = rel_
+        && n_type ineq = n_type_
+    done
+  in
+  !result
+
+let%test "construct n dim Last_ with change rel" =
+  (* 4y + 3x + 2 V 5y + 2x + 1 -> y /\ x + 1  *)
+  let rels = [| LessThan; LessEqual; GreaterThan; GreaterEqual |]
+  and c_rels = [| GreaterThan; GreaterEqual; LessThan; LessEqual |]
+  and n_types =
+    [| LastGreaterThan; LastGreaterEqual; LastLessThan; LastLessEqual |]
+  in
+  let result = ref true in
+  let _ =
+    for i = 0 to Array.length rels - 1 do
+      let rel1 = rels.(i) and rel2 = c_rels.(i) and n_type_ = n_types.(i) in
+      let ineq =
+        construct 2
+          [ Q.of_int 4; Q.of_int 3; Q.of_int 2 ]
+          [ Q.of_int 5; Q.of_int 2; Q.of_int 1 ]
+          rel1
+      in
+      result :=
+        !result
+        && lhs ineq = [ Q.one; Q.zero; Q.zero ]
+        && rhs ineq = [ Q.zero; Q.one; Q.one ]
+        && rel ineq = rel2
+        && n_type ineq = n_type_
+    done
+  in
+  !result
+
 (* is_satisfied *)
 let%test "is_satisfied always true" =
   (* 2 x_n + ... + 2 x_1 + 2 > x_n + ... + x_1 + 1*)
