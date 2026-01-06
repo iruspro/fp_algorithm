@@ -41,6 +41,16 @@ let construct (dim : int) (expr1 : Lin_expr.t) (expr2 : Lin_expr.t) (rel : rel)
       (expr1, expr2, rel, rel_to_n_type rel)
   | _ -> failwith "A linear expression must have at least one coefficient"
 
+let make_constraints (dim : int) (expr : Lin_expr.t) (exprs : Lin_expr.t list)
+    (rel : rel) : t list =
+  let rec aux acc = function
+    | [] -> acc
+    | e :: exprs ->
+        let acc = construct dim expr e rel :: acc in
+        aux acc exprs
+  in
+  aux [] exprs
+
 let compare val1 val2 rel =
   match rel with
   | LessThan -> val1 < val2
