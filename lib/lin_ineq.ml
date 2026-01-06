@@ -88,12 +88,7 @@ let negate ineq =
   in
   { ineq with rel; n_type }
 
-let extract_rh_sides ineqs =
-  let rec aux acc = function
-    | [] -> acc
-    | ineq :: ineqs -> aux (rhs ineq :: acc) ineqs
-  in
-  aux [] ineqs
+let extract_rh_sides = List.map (fun ineq -> ineq.rhs)
 
 (* Tests *)
 (* construct *)
