@@ -24,6 +24,13 @@ let sub_last (expr1 : t) (expr2 : t) : t =
     | [], _ | _, [] -> failwith "Linear expressions have different dimensions"
     | q_n :: qs, r_n :: rs -> aux [ Q.mul q_n r_n ] q_n (qs, rs))
 
+let reduce_dim = function
+  | [] -> failwith "A linear expression must have at least one coefficient"
+  | [ _ ] ->
+      failwith
+        "Cannot reduce the dimension of a constant-only linear expression"
+  | _ :: (xs : t) -> xs
+
 let add (expr1 : t) (expr2 : t) : t =
   let rec aux acc = function
     | [], [] -> acc
@@ -60,6 +67,11 @@ let%test "sub_last" =
   let expr1 = [ Q.of_int 5; Q.of_int 2; Q.of_int 1 ]
   and expr2 = [ Q.of_int 2; Q.of_int 2; Q.of_int 5 ] in
   sub_last expr1 expr2 = [ Q.of_int 10; Q.of_int 12; Q.of_int 26 ]
+
+(* reduce_dim *)
+let%test "reduce_dim" =
+  (* 0*y + 5x + 1 -> 5x + 1 *)
+  reduce_dim [ Q.zero; Q.of_int 5; Q.of_int 1 ] = [ Q.of_int 5; Q.of_int 1 ]
 
 (* add *)
 let%test "add" =
