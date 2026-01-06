@@ -7,7 +7,12 @@ type n_type =
   | LastLessThan
   | LastLessEqual
 
-type t = Lin_expr.t * Lin_expr.t * rel * n_type
+type t = { lhs : Lin_expr.t; rhs : Lin_expr.t; rel : rel; n_type : n_type }
+
+let lhs ineq = ineq.lhs
+let rhs ineq = ineq.rhs
+let rel ineq = ineq.rel
+let n_type ineq = ineq.n_type
 
 let change_rel = function
   | LessThan -> GreaterThan
@@ -21,36 +26,6 @@ let rel_to_n_type = function
   | GreaterThan -> LastGreaterThan
   | GreaterEqual -> LastGreaterEqual
 
-let construct (dim : int) (expr1 : Lin_expr.t) (expr2 : Lin_expr.t) (rel : rel)
-    : t =
-  let one = Q.one :: Lin_expr.zero (pred dim) in
-  match (expr1, expr2) with
-  | [ _ ], [ _ ] -> (expr1, expr2, rel, WithoutLast)
-  | q_n :: qs, r_n :: rs when (q_n = Q.zero && r_n = Q.zero) || q_n = r_n ->
-      (Q.zero :: qs, Q.zero :: rs, rel, WithoutLast)
-  | q_n :: qs, r_n :: rs when q_n > r_n ->
-      let expr1 = Lin_expr.mul_by (Q.sub q_n r_n) one
-      and expr2 =
-        Q.zero :: Lin_expr.add rs (Lin_expr.mul_by (Q.of_int (-1)) qs)
-      in
-      (expr1, expr2, rel, rel_to_n_type rel)
-  | q_n :: qs, r_n :: rs (* q_n < r_n case *) ->
-      let expr1 = Lin_expr.mul_by (Q.sub r_n q_n) one
-      and expr2 = Q.zero :: Lin_expr.add qs (Lin_expr.mul_by (Q.of_int (-1)) rs)
-      and rel = change_rel rel in
-      (expr1, expr2, rel, rel_to_n_type rel)
-  | _ -> failwith "A linear expression must have at least one coefficient"
-
-let make_constraints (dim : int) (expr : Lin_expr.t) (exprs : Lin_expr.t list)
-    (rel : rel) : t list =
-  let rec aux acc = function
-    | [] -> acc
-    | e :: exprs ->
-        let acc = construct dim expr e rel :: acc in
-        aux acc exprs
-  in
-  aux [] exprs
-
 let compare val1 val2 rel =
   match rel with
   | LessThan -> val1 < val2
@@ -58,83 +33,118 @@ let compare val1 val2 rel =
   | GreaterThan -> val1 > val2
   | GreaterEqual -> val1 >= val2
 
-let is_satisfied point (le1, le2, rel, _) =
-  let val1 = Lin_expr.eval le1 point and val2 = Lin_expr.eval le2 point in
-  compare val1 val2 rel
+let construct dim lhs rhs rel =
+  let x_n = Q.one :: Lin_expr.zero (pred dim) in
+  match (lhs, rhs) with
+  | [ _ ], [ _ ] -> { lhs; rhs; rel; n_type = WithoutLast }
+  | q_n :: qs, r_n :: rs when (q_n = Q.zero && r_n = Q.zero) || q_n = r_n ->
+      { lhs = Q.zero :: qs; rhs = Q.zero :: rs; rel; n_type = WithoutLast }
+  | q_n :: qs, r_n :: rs when q_n > r_n ->
+      let lhs = Lin_expr.mul_by (Q.sub q_n r_n) x_n
+      and rhs =
+        Q.zero :: Lin_expr.add rs (Lin_expr.mul_by (Q.of_int (-1)) qs)
+      in
+      { lhs; rhs; rel; n_type = rel_to_n_type rel }
+  | q_n :: qs, r_n :: rs (* q_n < r_n case *) ->
+      let lhs = Lin_expr.mul_by (Q.sub r_n q_n) x_n
+      and rhs = Q.zero :: Lin_expr.add qs (Lin_expr.mul_by (Q.of_int (-1)) rs)
+      and rel = change_rel rel in
+      { lhs; rhs; rel; n_type = rel_to_n_type rel }
+  | _ -> failwith "A linear expression must have at least one coefficient"
 
-let rec find_unsatisfied point = function
+let make_constraints dim lhs all_rhs rel =
+  let rec aux acc = function
+    | [] -> acc
+    | rhs :: all_rhs -> aux (construct dim lhs rhs rel :: acc) all_rhs
+  in
+  aux [] all_rhs
+
+let is_satisfied ineq point =
+  let val1 = Lin_expr.eval (lhs ineq) point
+  and val2 = Lin_expr.eval (rhs ineq) point in
+  compare val1 val2 (rel ineq)
+
+let rec find_unsatisfied ineqs point =
+  match ineqs with
   | [] -> None
   | ineq :: ineqs ->
-      if not (is_satisfied point ineq) then Some ineq
-      else find_unsatisfied point ineqs
+      if not (is_satisfied ineq point) then Some ineq
+      else find_unsatisfied ineqs point
 
-let negate (expr1, expr2, rel, n_type) =
+let negate ineq =
   let rel =
-    match rel with
+    match rel ineq with
     | LessThan -> GreaterEqual
     | LessEqual -> GreaterThan
     | GreaterThan -> LessEqual
     | GreaterEqual -> LessThan
   and n_type =
-    match n_type with
+    match n_type ineq with
     | WithoutLast -> WithoutLast
     | LastGreaterThan -> LastLessEqual
     | LastGreaterEqual -> LastLessThan
     | LastLessThan -> LastGreaterEqual
     | LastLessEqual -> LastGreaterThan
   in
-  (expr1, expr2, rel, n_type)
+  { ineq with rel; n_type }
 
 (* Tests *)
 (* is_satisfied *)
-let%test "is_satisfied random" =
+let%test "is_satisfied always true" =
+  (* 2 x_n + ... + 2 x_1 + 2 > x_n + ... + x_1 + 1*)
   let result = ref true in
-  let dims = [| 0; 1; 5; 10 |] in
+  let dims = [| 1; 5; 10; 100 |] and n_cases = 100 in
+  let rec aux acc dim lhs rhs rel = function
+    | [] -> acc
+    | point :: points ->
+        let acc =
+          match rel with
+          | GreaterThan | GreaterEqual ->
+              acc && is_satisfied (construct dim lhs rhs rel) point
+          | LessThan | LessEqual ->
+              acc || is_satisfied (construct dim lhs rhs rel) point
+        in
+        aux acc dim lhs rhs rel points
+  in
   let _ =
     for i = 1 to pred (Array.length dims) do
       let dim = dims.(i) in
-      let expr1 = List.init (succ dim) (fun _ -> Q.of_int 2)
-      and expr2 = List.init (succ dim) (fun _ -> Q.of_int 1) in
-      let n_cases = 10 in
+      let lhs = List.init (succ dim) (fun _ -> Q.of_int 2)
+      and rhs = List.init (succ dim) (fun _ -> Q.of_int 1) in
       let points =
         List.init n_cases (fun _ ->
             List.init dim (fun _ -> Q.of_int (Random.full_int 100)))
       in
-      let rec aux acc rel = function
-        | [] -> acc
-        | point :: points ->
-            let acc =
-              match rel with
-              | GreaterThan | GreaterEqual ->
-                  acc && is_satisfied point (construct dim expr1 expr2 rel)
-              | LessThan | LessEqual ->
-                  acc || is_satisfied point (construct dim expr1 expr2 rel)
-            in
-            aux acc rel points
-      in
       result :=
-        aux true GreaterThan points
-        && aux true GreaterEqual points
-        && (not (aux false LessEqual points))
-        && not (aux false LessThan points)
+        aux true dim lhs rhs GreaterThan points
+        && aux true dim lhs rhs GreaterEqual points
+        && (not (aux false dim lhs rhs LessEqual points))
+        && not (aux false dim lhs rhs LessThan points)
     done
   in
   !result
 
 let%test "is_satisfied equals" =
+  (* 3 y + 2 x + 3 V 0 at (0, -1) *)
   let dim = 2 in
-  let expr = List.init (succ dim) (fun _ -> Q.of_int 2)
+  let lhs = [ Q.of_int 3; Q.of_int 2; Q.of_int 3 ]
   and zero = Lin_expr.zero dim
-  and point = [ Q.of_int (-1); Q.of_int 0 ] in
-  is_satisfied point (construct dim expr zero LessEqual)
-  && is_satisfied point (construct dim expr zero GreaterEqual)
-  && (not (is_satisfied point (construct dim expr zero LessThan)))
-  && not (is_satisfied point (construct dim expr zero GreaterThan))
+  and point = Point.from_list [ Q.of_int 0; Q.of_int (-1) ] in
+  is_satisfied (construct dim lhs zero LessEqual) point
+  && is_satisfied (construct dim lhs zero GreaterEqual) point
+  && (not (is_satisfied (construct dim lhs zero LessThan) point))
+  && not (is_satisfied (construct dim lhs zero GreaterThan) point)
 
 (* find_unsatisfied *)
 let%test "find_unsatisfied success" =
+  (* -2 y - 2 x - 2 > 0  at (1, 1)*)
   let dim = 2 in
   let zero = Lin_expr.zero dim in
+  let fail =
+    construct dim
+      (List.init (succ dim) (fun _ -> Q.of_int (-2)))
+      zero GreaterThan
+  in
   let ineqs =
     [
       construct dim
@@ -143,19 +153,17 @@ let%test "find_unsatisfied success" =
       construct dim
         (List.init (succ dim) (fun _ -> Q.of_int 3))
         zero GreaterThan;
+      fail;
       construct dim
-        (List.init (succ dim) (fun _ -> Q.of_int (-2)))
-        zero GreaterThan;
-      construct dim
-        (List.init (succ dim) (fun _ -> Q.of_int 3))
+        (List.init (succ dim) (fun _ -> Q.of_int 4))
         zero GreaterThan;
       construct dim
         (List.init (succ dim) (fun _ -> Q.of_int (-1)))
         zero GreaterThan;
     ]
-  and point = [ Q.of_int 1; Q.of_int 1 ] in
-  let res = find_unsatisfied point ineqs in
-  match res with None -> false | Some _ -> true
+  and point = Point.from_list [ Q.of_int 1; Q.of_int 1 ] in
+  let res = find_unsatisfied ineqs point in
+  match res with None -> false | Some ineq -> true && lhs ineq = lhs fail
 
 let%test "find_unsatisfied fail" =
   let dim = 2 in
@@ -178,31 +186,38 @@ let%test "find_unsatisfied fail" =
         (List.init (succ dim) (fun _ -> Q.of_int (-1)))
         zero LessThan;
     ]
-  and point = [ Q.of_int 1; Q.of_int 1 ] in
-  let res = find_unsatisfied point ineqs in
+  and point = Point.from_list [ Q.of_int 1; Q.of_int 1 ] in
+  let res = find_unsatisfied ineqs point in
   match res with None -> true | Some _ -> false
 
 (* negate *)
-let%test "negate LessThan -> GreaterEqual" =
-  let expr1 = [ Q.one ] and expr2 = [ Q.zero ] in
-  let input = construct 1 expr1 expr2 LessThan in
-  let _, _, r, _ = negate input in
-  r = GreaterEqual
+let%test "negate LessThan -> GreaterEqual and WithoutLast" =
+  let lhs1 = [ Q.one ]
+  and rhs1 = [ Q.zero ]
+  and lhs2 = [ Q.one; Q.zero ]
+  and rhs2 = [ Q.zero; Q.zero ] in
+  let input1 = construct 1 lhs1 rhs1 LessThan
+  and input2 = construct 2 lhs2 rhs2 LessThan in
+  let ineq1 = negate input1 and ineq2 = negate input2 in
+  rel ineq1 = GreaterEqual
+  && n_type ineq1 = WithoutLast
+  && rel ineq2 = GreaterEqual
+  && n_type ineq2 = LastGreaterEqual
 
 let%test "negate LessEqual -> GreaterThan" =
-  let expr1 = [ Q.one ] and expr2 = [ Q.zero ] in
-  let input = construct 1 expr1 expr2 LessEqual in
-  let _, _, r, _ = negate input in
-  r = GreaterThan
+  let lhs = [ Q.one; Q.one ] and rhs = [ Q.zero; Q.zero ] in
+  let input = construct 2 lhs rhs LessEqual in
+  let ineq = negate input in
+  rel ineq = GreaterThan && n_type ineq = LastGreaterThan
 
 let%test "negate GreaterThan -> LessEqual" =
-  let expr1 = [ Q.one ] and expr2 = [ Q.zero ] in
-  let input = construct 1 expr1 expr2 GreaterThan in
-  let _, _, r, _ = negate input in
-  r = LessEqual
+  let lhs = [ Q.one; Q.one ] and rhs = [ Q.zero; Q.zero ] in
+  let input = construct 2 lhs rhs GreaterThan in
+  let ineq = negate input in
+  rel ineq = LessEqual && n_type ineq = LastLessEqual
 
 let%test "negate GreaterEqual -> LessThan" =
-  let expr1 = [ Q.one ] and expr2 = [ Q.zero ] in
-  let input = construct 1 expr1 expr2 GreaterEqual in
-  let _, _, r, _ = negate input in
-  r = LessThan
+  let lhs = [ Q.one; Q.one ] and rhs = [ Q.zero; Q.zero ] in
+  let input = construct 2 lhs rhs GreaterEqual in
+  let ineq = negate input in
+  rel ineq = LessThan && n_type ineq = LastLessThan
