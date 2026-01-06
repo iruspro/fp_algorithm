@@ -27,6 +27,14 @@ let sub_last (expr1 : t) (expr2 : t) : t =
   in
   List.rev substituted
 
+let add expr1 expr2 =
+  let rec aux acc = function
+    | [], [] -> acc
+    | _, [] | [], _ -> failwith "Linear expressions have different dimensions"
+    | q :: qs, r :: rs -> aux (Q.add q r :: acc) (qs, rs)
+  in
+  List.rev (aux [] (expr1, expr2))
+
 let mul_by c = List.map (fun q -> Q.mul c q)
 
 (* Tests *)
@@ -38,7 +46,8 @@ let%test "zero" = zero 0 = [ Q.zero ] && zero 2 = [ Q.zero; Q.zero; Q.zero ]
 let%test "eval" =
   let expr1 = zero 5
   and point1 = List.init 5 (fun _ -> Q.of_int (Random.full_int 100)) in
-  let expr2 = [ Q.of_int 1; Q.of_int 2; Q.of_int 3 ] and point2 = [ Q.of_int 2; Q.of_int 10 ] in
+  let expr2 = [ Q.of_int 1; Q.of_int 2; Q.of_int 3 ]
+  and point2 = [ Q.of_int 2; Q.of_int 10 ] in
   let expr3 = [ Q.of_int 0; Q.of_int 10 ]
   and point3 = List.init 1 (fun _ -> Q.of_int (Random.full_int 100)) in
   eval expr1 point1 = Q.zero
@@ -50,6 +59,12 @@ let%test "sub_last" =
   let expr1 = [ Q.of_int 5; Q.of_int 2; Q.of_int 1 ]
   and expr2 = [ Q.of_int 1; Q.of_int 2; Q.of_int 5 ] in
   sub_last expr1 expr2 = [ Q.of_int 5; Q.of_int 12; Q.of_int 26 ]
+
+(* add *)
+let%test "add" =
+  let expr1 = List.init 3 (fun _ -> Q.of_int 1)
+  and expr2 = [ Q.of_int 1; Q.of_int 2; Q.of_int 3 ] in
+  add expr1 expr2 = [ Q.of_int 2; Q.of_int 3; Q.of_int 4 ]
 
 (* mul_by *)
 let%test "mul_by" =
