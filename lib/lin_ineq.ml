@@ -88,6 +88,13 @@ let negate ineq =
   in
   { ineq with rel; n_type }
 
+let extract_rh_sides ineqs =
+  let rec aux acc = function
+    | [] -> acc
+    | ineq :: ineqs -> aux (rhs ineq :: acc) ineqs
+  in
+  aux [] ineqs
+
 (* Tests *)
 (* construct *)
 let%test "construct 1 dim" =
@@ -298,3 +305,15 @@ let%test "negate GreaterEqual -> LessThan" =
   let input = construct 2 lhs rhs GreaterEqual in
   let ineq = negate input in
   rel ineq = LessThan && n_type ineq = LastLessThan
+
+(* extract_rh_sides *)
+let%test "extract_rh_sides" =
+  let ineqs =
+    [
+      construct 2 [ Q.zero; Q.zero; Q.zero ] [ Q.zero; Q.zero; Q.one ] LessThan;
+      construct 2 [ Q.zero; Q.zero; Q.zero ] [ Q.zero; Q.one; Q.zero ] LessThan;
+    ]
+  in
+  let rh_sides = extract_rh_sides ineqs in
+  List.mem [ Q.zero; Q.zero; Q.one ] rh_sides
+  && List.mem [ Q.zero; Q.one; Q.zero ] rh_sides
