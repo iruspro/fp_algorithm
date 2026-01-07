@@ -92,6 +92,43 @@ let negate ineq =
 
 let extract_rh_sides = List.map (fun ineq -> ineq.rhs)
 
+let rel_to_str rel =
+  match rel with
+  | LessThan -> "<"
+  | LessEqual -> "≤"
+  | GreaterThan -> ">"
+  | GreaterEqual -> "≥"
+
+(* let type_to_str n_type =
+  match n_type with
+  | WithoutLast -> "WL"
+  | LastGreaterThan -> "GT"
+  | LastGreaterEqual -> "GE"
+  | LastLessThan -> "LT"
+  | LastLessEqual -> "LE" *)
+
+let to_string (ineq : t) =
+  Lin_expr.to_string (lhs ineq)
+  ^ " "
+  ^ rel_to_str (rel ineq)
+  ^ " "
+  ^ Lin_expr.to_string (rhs ineq)
+(* ^ " "
+  ^ type_to_str (n_type ineq) *)
+
+let to_string_many (ineqs : t list) =
+  let len = List.length ineqs in
+  let ineqs =
+    List.mapi
+      (fun i ineq ->
+        if i <> len - 1 then to_string ineq ^ "\n" else to_string ineq)
+      ineqs
+  in
+  "{\n" ^ List.fold_left ( ^ ) "" ineqs ^ "\n}"
+
+let print ineq = print_endline (to_string ineq)
+let print_many ineqs = print_endline (to_string_many ineqs)
+
 (* Tests *)
 (* construct *)
 let%test "construct 1 dim" =

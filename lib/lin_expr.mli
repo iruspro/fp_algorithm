@@ -7,3 +7,5 @@ val reduce_dim : t -> t
 val equal : t -> t -> bool
 val add : t -> t -> t
 val mul_by : Q.t -> t -> t
+val to_string : t -> string
+val print : t -> unit

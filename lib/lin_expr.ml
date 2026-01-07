@@ -44,6 +44,49 @@ let add (expr1 : t) (expr2 : t) : t =
 
 let mul_by c (expr : t) : t = List.map (fun q -> Q.mul c q) expr
 
+(* Print *)
+let int_to_subscript n =
+  let subs = [| "₀"; "₁"; "₂"; "₃"; "₄"; "₅"; "₆"; "₇"; "₈"; "₉" |] in
+  let rec aux acc = function
+    | 0 -> acc
+    | n ->
+        let digit = n mod 10 in
+        aux (subs.(digit) ^ acc) (n / 10)
+  in
+  if n = 0 then subs.(0) else aux "" n
+
+let q_to_sign q = if Q.geq q Q.zero then "+" else "-"
+
+let q_to_coeff q =
+  let end_ = if Z.equal (Q.den q) Z.one then "" else " " in
+  if Q.equal (Q.abs q) Q.one then "" else Q.to_string (Q.abs q) ^ end_
+
+let to_string (expr : t) =
+  let dim = List.length expr - 1 in
+  if dim = 0 then Q.to_string (List.hd expr)
+  else
+    let first = ref true in
+    let rec aux acc = function
+      | [] -> acc
+      | q :: qs when Q.equal q Q.zero -> aux acc qs
+      | [ q_0 ] ->
+          aux (acc ^ " " ^ q_to_sign q_0 ^ " " ^ Q.to_string (Q.abs q_0)) []
+      | q :: qs when List.length qs = dim || !first ->
+          let i = List.length qs in
+          let sign = if Q.lt q Q.zero then "-" else "" in
+          first := false;
+          aux (acc ^ sign ^ q_to_coeff q ^ "x" ^ int_to_subscript i) qs
+      | q :: qs ->
+          let i = List.length qs in
+          aux
+            (acc ^ " " ^ q_to_sign q ^ " " ^ q_to_coeff q ^ "x"
+           ^ int_to_subscript i)
+            qs
+    in
+    aux "" expr
+
+let print expr = print_endline (to_string expr)
+
 (* Tests *)
 
 (* zero *)
