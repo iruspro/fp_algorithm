@@ -31,6 +31,16 @@ let reduce_dim = function
         "Cannot reduce the dimension of a constant-only linear expression"
   | _ :: (xs : t) -> xs
 
+let find_supremum_term terms point =
+  let rec aux c_term c_min = function
+    | [] -> c_term
+    | term :: terms ->
+        let c_val = eval term point in
+        if Q.lt c_val c_min then aux (Some term) c_val terms
+        else aux c_term c_min terms
+  in
+  aux None Q.inf terms
+
 let equal (expr1 : t) (expr2 : t) =
   List.fold_left ( && ) true (List.map2 (fun q r -> Q.equal q r) expr1 expr2)
 
