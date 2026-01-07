@@ -27,6 +27,7 @@ let rel_to_n_type = function
   | GreaterEqual -> LastGreaterEqual
 
 let compare val1 val2 rel =
+  let open Q in
   match rel with
   | LessThan -> val1 < val2
   | LessEqual -> val1 <= val2
@@ -34,6 +35,7 @@ let compare val1 val2 rel =
   | GreaterEqual -> val1 >= val2
 
 let construct dim lhs rhs rel =
+  let open Q in
   let x_n = Q.one :: Lin_expr.zero (pred dim) in
   match (lhs, rhs) with
   | [ _ ], [ _ ] -> { lhs; rhs; rel; n_type = WithoutLast }
@@ -108,11 +110,11 @@ let%test "construct n dim WithoutLast" =
       [ Q.of_int 0; Q.of_int 2; Q.of_int 1 ]
       GreaterThan
   in
-  List.hd (lhs ineq1) = Q.zero
-  && List.hd (rhs ineq1) = Q.zero
+  Q.equal (List.hd (lhs ineq1)) Q.zero
+  && Q.equal (List.hd (rhs ineq1)) Q.zero
   && n_type ineq1 = WithoutLast
-  && List.hd (lhs ineq2) = Q.zero
-  && List.hd (rhs ineq2) = Q.zero
+  && Q.equal (List.hd (lhs ineq2)) Q.zero
+  && Q.equal (List.hd (rhs ineq2)) Q.zero
   && n_type ineq2 = WithoutLast
 
 let%test "construct n dim Last_ without change rel" =
@@ -133,8 +135,8 @@ let%test "construct n dim Last_ without change rel" =
       in
       result :=
         !result
-        && lhs ineq = [ Q.one; Q.zero; Q.zero ]
-        && rhs ineq = [ Q.zero; Q.of_int (-1); Q.of_int (-1) ]
+        && Lin_expr.equal (lhs ineq) [ Q.one; Q.zero; Q.zero ]
+        && Lin_expr.equal (rhs ineq) [ Q.zero; Q.of_int (-1); Q.of_int (-1) ]
         && rel ineq = rel_
         && n_type ineq = n_type_
     done
@@ -160,8 +162,8 @@ let%test "construct n dim Last_ with change rel" =
       in
       result :=
         !result
-        && lhs ineq = [ Q.one; Q.zero; Q.zero ]
-        && rhs ineq = [ Q.zero; Q.one; Q.one ]
+        && Lin_expr.equal (lhs ineq) [ Q.one; Q.zero; Q.zero ]
+        && Lin_expr.equal (rhs ineq) [ Q.zero; Q.one; Q.one ]
         && rel ineq = rel2
         && n_type ineq = n_type_
     done
@@ -243,7 +245,9 @@ let%test "find_unsatisfied success" =
     ]
   and point = Point.from_array [| Q.of_int 1; Q.of_int 1 |] in
   let res = find_unsatisfied ineqs point in
-  match res with None -> false | Some ineq -> true && lhs ineq = lhs fail
+  match res with
+  | None -> false
+  | Some ineq -> true && Lin_expr.equal (lhs ineq) (lhs fail)
 
 let%test "find_unsatisfied fail" =
   let dim = 2 in
