@@ -4,8 +4,6 @@ let extend_dim (point : t) (v : Q.t) : t = v :: point
 let from_array (arr : Q.t array) : t = List.rev (Array.to_list arr)
 let as_list (point : t) : Q.t list = point
 
-(* let from_list : Q.t list -> t = List.rev *)
-
 (* Tests *)
 (* extend_dim *)
 let%test "extend_dim" =
