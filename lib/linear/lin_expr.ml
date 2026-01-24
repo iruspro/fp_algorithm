@@ -5,6 +5,9 @@ let zero dim : t = List.init (succ dim) (fun _ -> Q.zero)
 let one dim : t =
   List.init (succ dim) (fun i -> if i = dim then Q.one else Q.zero)
 
+let x dim i : t =
+  List.init (succ dim) (fun j -> if j = dim - i then Q.one else Q.zero)
+
 let eval (expr : t) point =
   let rec aux acc = function
     | [ q_0 ], [] -> Q.add acc q_0
@@ -100,13 +103,15 @@ let to_string (expr : t) =
 
 let print expr = print_endline (to_string expr)
 
-(* Tests *)
-
+(* TESTS *)
 (* zero *)
 let%test "zero" = equal (zero 2) [ Q.zero; Q.zero; Q.zero ]
 
 (* one *)
 let%test "one" = equal (one 2) [ Q.zero; Q.zero; Q.one ]
+
+(* x *)
+let%test "x" = equal (x 3 1) [ Q.zero; Q.zero; Q.one; Q.zero ]
 
 (* eval *)
 let%test "eval" =
