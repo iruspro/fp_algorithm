@@ -1,4 +1,5 @@
-open Fp_algorithm
+open Core
+open Linear
 
 let local_alg1 point =
   let open Q in
@@ -34,6 +35,6 @@ let local_alg1 point =
   else failwith "Bad point"
 
 let () =
-  let cle = Algorithm.eval 1 local_alg1 (Point.from_array [||]) in
+  let cle = Algorithm.lfp 1 local_alg1 (Point.from_array [||]) in
   Lin_ineq.print_many (Cond_lin_expr.constraints cle);
   Lin_expr.print (Cond_lin_expr.expr cle)

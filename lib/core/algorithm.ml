@@ -1,4 +1,6 @@
-let eval dim (local_alg : Local_alg.t) point (* r *) =
+open Linear
+
+let lfp dim (local_alg : Local_alg.t) point (* r *) =
   let new_dim = pred dim in
   let zero = Lin_expr.zero new_dim
   and ineq_constructor = Lin_ineq.construct new_dim

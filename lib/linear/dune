@@ -1,5 +1,5 @@
 (library
- (name fp_algorithm)
+ (name linear)
  (libraries zarith)
  (inline_tests)
  (preprocess

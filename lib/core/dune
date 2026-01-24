@@ -1,0 +1,6 @@
+(library
+ (name core)
+ (libraries zarith linear)
+ (inline_tests)
+ (preprocess
+  (pps ppx_expect)))
