@@ -2,6 +2,9 @@ type t = Q.t list (* [q_n; ...; q_1; q_0] *)
 
 let zero dim : t = List.init (succ dim) (fun _ -> Q.zero)
 
+let one dim : t =
+  List.init (succ dim) (fun i -> if i = dim then Q.one else Q.zero)
+
 let eval (expr : t) point =
   let rec aux acc = function
     | [ q_0 ], [] -> Q.add acc q_0
@@ -101,6 +104,9 @@ let print expr = print_endline (to_string expr)
 
 (* zero *)
 let%test "zero" = equal (zero 2) [ Q.zero; Q.zero; Q.zero ]
+
+(* one *)
+let%test "one" = equal (one 2) [ Q.zero; Q.zero; Q.one ]
 
 (* eval *)
 let%test "eval" =
