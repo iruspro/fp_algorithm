@@ -1,0 +1,6 @@
+(library
+ (name mu_term)
+ (libraries zarith core linear)
+ (inline_tests)
+ (preprocess
+  (pps ppx_expect)))
