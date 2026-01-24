@@ -160,3 +160,5 @@ let lfp dim (local_alg : Local_alg.t) point (* r *) =
     | [] -> failwith "A linear expression must have at least one coefficient"
   in
   aux [] zero
+
+let gfp _ (_ : Local_alg.t) _ = failwith "not implemented"
