@@ -90,6 +90,18 @@ let negate ineq =
   in
   { ineq with rel; n_type }
 
+let reverse ineq =
+  let rel = change_rel (rel ineq)
+  and n_type =
+    match n_type ineq with
+    | WithoutLast -> WithoutLast
+    | LastGreaterThan -> LastLessThan
+    | LastGreaterEqual -> LastLessEqual
+    | LastLessThan -> LastGreaterThan
+    | LastLessEqual -> LastGreaterEqual
+  in
+  { ineq with rel; n_type }
+
 let extract_rh_sides = List.map (fun ineq -> ineq.rhs)
 
 let rel_to_str rel =

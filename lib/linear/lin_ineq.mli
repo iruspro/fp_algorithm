@@ -18,6 +18,7 @@ val make_constraints : int -> Lin_expr.t -> Lin_expr.t list -> rel -> t list
 val is_satisfied : t -> Point.t -> bool
 val find_unsatisfied : t list -> Point.t -> t option
 val negate : t -> t
+val reverse : t -> t
 val extract_rh_sides : t list -> Lin_expr.t list
 val to_string : t -> string
 val to_string_many : t list -> string
