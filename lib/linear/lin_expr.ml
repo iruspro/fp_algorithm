@@ -15,7 +15,7 @@ let eval (expr : t) point =
         failwith "Point and linear expression have different dimensions"
     | q :: qs, r :: rs -> aux (Q.add acc (Q.mul q r)) (qs, rs)
   in
-  aux Q.zero (expr, Point.as_list point)
+  aux Q.zero (expr, Point.as_reversed_list point)
 
 let sub_last (expr1 : t) (expr2 : t) : t =
   let rec aux acc q_n = function
