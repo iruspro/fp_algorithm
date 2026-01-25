@@ -69,11 +69,16 @@ let lfp dim (local_alg : Local_alg.t) point (* r *) =
 
   (* loop *)
   let rec aux c_constraints c_approx =
+    Printf.printf "current";
+    Lin_ineq.print_many c_constraints;
+    Lin_expr.print c_approx;
     let cle =
       local_alg (Point.extend_dim point (Lin_expr.eval c_approx point))
     in
     let constraints (* C *) = Cond_lin_expr.constraints cle
     and expr (* e *) = Cond_lin_expr.expr cle in
+    Lin_ineq.print_many constraints;
+    Lin_expr.print expr;
 
     (* Arrange inequalities in C *)
     let constraints' (* C' *) = get_new_constraints constraints
@@ -161,4 +166,19 @@ let lfp dim (local_alg : Local_alg.t) point (* r *) =
   in
   aux [] zero
 
-let gfp _ (_ : Local_alg.t) _ = failwith "not implemented"
+let gfp dim (local_alg : Local_alg.t) point =
+  let dual_local_alg point =
+    let cle = local_alg point in
+    Cond_lin_expr.dual dim cle
+  in
+
+  let cle = lfp dim dual_local_alg point in
+
+  let constraints = Cond_lin_expr.constraints cle
+  and expr =
+    Lin_expr.add
+      (Lin_expr.one (pred dim))
+      (Lin_expr.mul_by Q.minus_one (Cond_lin_expr.expr cle))
+  in
+
+  Cond_lin_expr.construct constraints expr
