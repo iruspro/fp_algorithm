@@ -1,5 +1,5 @@
 (library
- (name mu_term)
+ (name mu_calc)
  (libraries zarith core linear)
  (inline_tests)
  (preprocess

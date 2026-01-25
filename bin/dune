@@ -1,4 +1,4 @@
 (executable
  (public_name fp_algorithm)
  (name main)
- (libraries core linear))
+ (libraries core linear mu_calc))
