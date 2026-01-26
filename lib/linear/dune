@@ -2,6 +2,7 @@
 
 (library
  (name linear)
+ (public_name fp_algorithm.linear)
  (libraries zarith)
  (inline_tests)
  (preprocess
