@@ -1,7 +1,7 @@
 open Linear
 
-let lfp dim (local_alg : Local_alg.t) point (* r *) =
-  let new_dim = pred dim in
+let lfp (local_alg : Local_alg.t) point (* r *) =
+  let new_dim = Point.dim point in
   let zero = Lin_expr.zero new_dim
   and ineq_constructor = Lin_ineq.construct new_dim
   and constraints_maker = Lin_ineq.make_constraints new_dim in
@@ -170,13 +170,15 @@ let lfp dim (local_alg : Local_alg.t) point (* r *) =
   in
   aux [] zero
 
-let gfp dim (local_alg : Local_alg.t) point =
+let gfp (local_alg : Local_alg.t) point =
+  let dim = pred (Point.dim point) in
+
   let dual_local_alg point =
     let cle = local_alg point in
     Cond_lin_expr.dual dim cle
   in
 
-  let cle = lfp dim dual_local_alg point in
+  let cle = lfp dual_local_alg point in
 
   let constraints = Cond_lin_expr.constraints cle
   and expr =

@@ -98,5 +98,5 @@ let rec eval n_vars term point =
         Cond_lin_expr.construct
           ((Lin_ineq.reverse ineq :: constraints1) @ constraints2)
           zero
-  | Mu term -> Algorithm.lfp n_vars (eval n_vars term) point
-  | Nu term -> Algorithm.gfp n_vars (eval n_vars term) point
+  | Mu term -> Algorithm.lfp (eval n_vars term) point
+  | Nu term -> Algorithm.gfp (eval n_vars term) point
