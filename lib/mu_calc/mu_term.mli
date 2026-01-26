@@ -13,4 +13,4 @@ type t =
   | Nu of t (* gfp *)
 
 val n_free_vars : t -> int
-val eval : int -> t -> Point.t -> Cond_lin_expr.t
+val eval : t -> Point.t -> Cond_lin_expr.t

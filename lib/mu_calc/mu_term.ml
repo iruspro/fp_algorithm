@@ -36,7 +36,8 @@ let n_free_vars term =
   in
   aux_vars 0 term - aux_binded 0 term
 
-let rec eval n_vars term point =
+let rec eval term point =
+  let n_vars = Point.dim point in
   match term with
   | Var i ->
       let x = Lin_expr.x n_vars i in
@@ -51,13 +52,13 @@ let rec eval n_vars term point =
   | Zero -> Cond_lin_expr.construct [] (Lin_expr.zero n_vars)
   | One -> Cond_lin_expr.construct [] (Lin_expr.one n_vars)
   | Scm (q, term) ->
-      let cle = eval n_vars term point in
+      let cle = eval term point in
 
       let constraints = Cond_lin_expr.constraints cle
       and expr = Cond_lin_expr.expr cle in
       Cond_lin_expr.construct constraints (Lin_expr.mul_by q expr)
   | Lwd (term1, term2) ->
-      let cle1 = eval n_vars term1 point and cle2 = eval n_vars term2 point in
+      let cle1 = eval term1 point and cle2 = eval term2 point in
 
       let constraints1 = Cond_lin_expr.constraints cle1
       and expr1 = Cond_lin_expr.expr cle1
@@ -72,7 +73,7 @@ let rec eval n_vars term point =
           ((Lin_ineq.reverse ineq :: constraints1) @ constraints2)
           expr1
   | Lwc (term1, term2) ->
-      let cle1 = eval n_vars term1 point and cle2 = eval n_vars term2 point in
+      let cle1 = eval term1 point and cle2 = eval term2 point in
 
       let constraints1 = Cond_lin_expr.constraints cle1
       and expr1 = Cond_lin_expr.expr cle1
@@ -87,7 +88,7 @@ let rec eval n_vars term point =
           (Lin_ineq.reverse ineq :: (constraints1 @ constraints2))
           expr2
   | Lsd (term1, term2) ->
-      let cle1 = eval n_vars term1 point and cle2 = eval n_vars term2 point in
+      let cle1 = eval term1 point and cle2 = eval term2 point in
 
       let constraints1 = Cond_lin_expr.constraints cle1
       and expr1 = Cond_lin_expr.expr cle1
@@ -103,7 +104,7 @@ let rec eval n_vars term point =
           ((Lin_ineq.reverse ineq :: constraints1) @ constraints2)
           one
   | Lsc (term1, term2) ->
-      let cle1 = eval n_vars term1 point and cle2 = eval n_vars term2 point in
+      let cle1 = eval term1 point and cle2 = eval term2 point in
 
       let constraints1 = Cond_lin_expr.constraints cle1
       and expr1 = Cond_lin_expr.expr cle1
@@ -121,5 +122,5 @@ let rec eval n_vars term point =
         Cond_lin_expr.construct
           ((Lin_ineq.reverse ineq :: constraints1) @ constraints2)
           zero
-  | Mu term -> Algorithm.lfp (eval (succ n_vars) term) point
-  | Nu term -> Algorithm.gfp (eval (succ n_vars) term) point
+  | Mu term -> Algorithm.lfp (eval term) point
+  | Nu term -> Algorithm.gfp (eval term) point
