@@ -7,7 +7,7 @@ let lfp dim (local_alg : Local_alg.t) point (* r *) =
   and constraints_maker = Lin_ineq.make_constraints new_dim in
 
   let sub_and_reduce expr1 expr2 =
-    Lin_expr.reduce_dim (Lin_expr.sub_last expr1 (Q.zero :: expr2))
+    Lin_expr.reduce_dim (Lin_expr.sub_last expr1 expr2)
   in
 
   let find_next_approximation c_constraints constraints' n c_approx expr
@@ -34,7 +34,7 @@ let lfp dim (local_alg : Local_alg.t) point (* r *) =
         @ constraints_maker c_approx strict_lowers Lin_ineq.GreaterThan
         @ constraints_maker c_approx non_strict_lowers Lin_ineq.GreaterEqual
     in
-    (c_constraints, sub_and_reduce expr term)
+    (c_constraints, sub_and_reduce expr (Lin_expr.extend_dim term Q.zero))
   in
 
   let get_new_constraints constraints =
@@ -61,8 +61,10 @@ let lfp dim (local_alg : Local_alg.t) point (* r *) =
     List.map
       (fun ineq ->
         ineq_constructor
-          (sub_and_reduce (Lin_ineq.lhs ineq) c_approx)
-          (sub_and_reduce (Lin_ineq.rhs ineq) c_approx)
+          (sub_and_reduce (Lin_ineq.lhs ineq)
+             (Lin_expr.extend_dim c_approx Q.zero))
+          (sub_and_reduce (Lin_ineq.rhs ineq)
+             (Lin_expr.extend_dim c_approx Q.zero))
           (Lin_ineq.rel ineq))
       constraints
   in
@@ -88,10 +90,14 @@ let lfp dim (local_alg : Local_alg.t) point (* r *) =
     in
 
     (* Check linear expression *)
-    match expr with
+    match Lin_expr.as_list expr with
     | q_n :: qs when Q.( <> ) q_n Q.one (* q_n != 1 case *) -> (
         (* Define a new linear expression *)
-        let f = Lin_expr.mul_by (Q.div Q.one (Q.sub Q.one q_n)) qs in
+        let f =
+          Lin_expr.mul_by
+            (Q.div Q.one (Q.sub Q.one q_n))
+            (Lin_expr.from_list qs)
+        in
 
         (* Check constraints at (r, f(r)) *)
         match
@@ -118,11 +124,9 @@ let lfp dim (local_alg : Local_alg.t) point (* r *) =
         | Some ineq (* C(r, f(r)) doesn't hold case *) ->
             (* Define a new constraint and go to find next optimization *)
             let lhs =
-              Lin_expr.reduce_dim
-                (Lin_expr.sub_last (Lin_ineq.lhs ineq) (Q.zero :: f))
+              sub_and_reduce (Lin_ineq.lhs ineq) (Lin_expr.extend_dim f Q.zero)
             and rhs =
-              Lin_expr.reduce_dim
-                (Lin_expr.sub_last (Lin_ineq.rhs ineq) (Q.zero :: f))
+              sub_and_reduce (Lin_ineq.rhs ineq) (Lin_expr.extend_dim f Q.zero)
             in
             let n =
               Lin_ineq.negate (ineq_constructor lhs rhs (Lin_ineq.rel ineq))
@@ -133,7 +137,8 @@ let lfp dim (local_alg : Local_alg.t) point (* r *) =
             in
             aux c_constraints c_approx)
     | _ :: qs
-      when Q.equal (Lin_expr.eval qs point)
+      when Q.equal
+             (Lin_expr.eval (Lin_expr.from_list qs) point)
              Q.zero (* q_n = 1 and q_n r_n + ... + r_1 q_1 + q_0 = 0 case *) ->
         (* Update current constraints *)
         let c_constraints =
@@ -141,16 +146,20 @@ let lfp dim (local_alg : Local_alg.t) point (* r *) =
           @ reduce_constraints constraints c_approx (* C(x, d(x)) *)
           @ [
               (* q_0 + q_1 x_1 + ... + q_{n-1} x_{n-1} = 0 *)
-              ineq_constructor qs zero Lin_ineq.LessEqual;
-              ineq_constructor qs zero Lin_ineq.GreaterEqual;
+              ineq_constructor (Lin_expr.from_list qs) zero Lin_ineq.LessEqual;
+              ineq_constructor (Lin_expr.from_list qs) zero
+                Lin_ineq.GreaterEqual;
             ]
         in
         (* Exit the loop *)
         Cond_lin_expr.construct c_constraints c_approx
     | _ :: qs (* q_n = 1 and q_n r_n + ... + r_1 q_1 + q_0 != 0 case *) ->
         (* Define a new constraint and go to find next optimization *)
-        let ineq1 = ineq_constructor qs zero Lin_ineq.LessThan
-        and ineq2 = ineq_constructor qs zero Lin_ineq.GreaterThan in
+        let ineq1 =
+          ineq_constructor (Lin_expr.from_list qs) zero Lin_ineq.LessThan
+        and ineq2 =
+          ineq_constructor (Lin_expr.from_list qs) zero Lin_ineq.GreaterThan
+        in
         let n = if Lin_ineq.is_satisfied ineq1 point then ineq1 else ineq2 in
         let c_constraints, c_approx =
           find_next_approximation c_constraints constraints' n c_approx expr

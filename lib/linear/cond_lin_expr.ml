@@ -35,5 +35,5 @@ let dual dim cle =
   in
 
   let constraints = List.map dual_ineq (constraints cle)
-  and expr = dual_expr (expr cle) in
+  and expr = Lin_expr.from_list (dual_expr (Lin_expr.as_list (expr cle))) in
   construct constraints expr

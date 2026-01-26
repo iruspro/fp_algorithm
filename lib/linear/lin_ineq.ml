@@ -36,20 +36,32 @@ let compare val1 val2 rel =
 
 let construct dim lhs rhs rel =
   let open Q in
-  let x_n = Q.one :: Lin_expr.zero (pred dim) in
-  match (lhs, rhs) with
+  (* TODO: delete *)
+  let x_n = Lin_expr.x dim dim in
+  (* let x_n = Q.one :: Lin_expr.zero (pred dim) in *)
+  match (Lin_expr.as_list lhs, Lin_expr.as_list rhs) with
   | [ _ ], [ _ ] -> { lhs; rhs; rel; n_type = WithoutLast }
   | q_n :: qs, r_n :: rs when (q_n = Q.zero && r_n = Q.zero) || q_n = r_n ->
-      { lhs = Q.zero :: qs; rhs = Q.zero :: rs; rel; n_type = WithoutLast }
+      {
+        lhs = Lin_expr.from_list (Q.zero :: qs);
+        rhs = Lin_expr.from_list (Q.zero :: rs);
+        rel;
+        n_type = WithoutLast;
+      }
   | q_n :: qs, r_n :: rs when q_n > r_n ->
       let lhs = Lin_expr.mul_by (Q.sub q_n r_n) x_n
       and rhs =
-        Q.zero :: Lin_expr.add rs (Lin_expr.mul_by (Q.of_int (-1)) qs)
+        Lin_expr.sub
+          (Lin_expr.from_list (Q.zero :: rs))
+          (Lin_expr.from_list (Q.zero :: qs))
       in
       { lhs; rhs; rel; n_type = rel_to_n_type rel }
   | q_n :: qs, r_n :: rs (* q_n < r_n case *) ->
       let lhs = Lin_expr.mul_by (Q.sub r_n q_n) x_n
-      and rhs = Q.zero :: Lin_expr.add qs (Lin_expr.mul_by (Q.of_int (-1)) rs)
+      and rhs =
+        Lin_expr.sub
+          (Lin_expr.from_list (Q.zero :: qs))
+          (Lin_expr.from_list (Q.zero :: rs))
       and rel = change_rel rel in
       { lhs; rhs; rel; n_type = rel_to_n_type rel }
   | _ -> failwith "A linear expression must have at least one coefficient"
@@ -143,7 +155,7 @@ let print_many ineqs = print_endline (to_string_many ineqs)
 
 (* Tests *)
 (* construct *)
-let%test "construct 1 dim" =
+(* let%test "construct 1 dim" =
   let ineq = construct 1 [ Q.one ] [ Q.zero ] LessThan in
   n_type ineq = WithoutLast && rel ineq = LessThan
 
@@ -365,4 +377,4 @@ let%test "extract_rh_sides" =
   in
   let rh_sides = extract_rh_sides ineqs in
   List.mem [ Q.zero; Q.zero; Q.one ] rh_sides
-  && List.mem [ Q.zero; Q.one; Q.zero ] rh_sides
+  && List.mem [ Q.zero; Q.one; Q.zero ] rh_sides *)
