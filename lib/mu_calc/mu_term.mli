@@ -12,4 +12,5 @@ type t =
   | Mu of t (* lfp *)
   | Nu of t (* gfp *)
 
-val eval : int (* num of vars *) -> t -> Point.t -> Cond_lin_expr.t
+val n_free_vars : t -> int
+val eval : int -> t -> Point.t -> Cond_lin_expr.t

@@ -13,6 +13,29 @@ type t =
   | Mu of t (* lfp *)
   | Nu of t (* gfp *)
 
+let n_free_vars term =
+  let rec aux_binded b_acc = function
+    | Var _ | Zero | One -> b_acc
+    | Scm (_, term) -> aux_binded b_acc term
+    | Mu term | Nu term -> aux_binded (succ b_acc) term
+    | Lwd (term1, term2)
+    | Lwc (term1, term2)
+    | Lsd (term1, term2)
+    | Lsc (term1, term2) ->
+        aux_binded b_acc term1 + aux_binded 0 term2
+  in
+  let rec aux_vars v_acc = function
+    | Var _ -> v_acc + 1
+    | Zero | One -> v_acc
+    | Scm (_, term) | Mu term | Nu term -> aux_vars v_acc term
+    | Lwd (term1, term2)
+    | Lwc (term1, term2)
+    | Lsd (term1, term2)
+    | Lsc (term1, term2) ->
+        aux_vars v_acc term1 + aux_vars 0 term2
+  in
+  aux_vars 0 term - aux_binded 0 term
+
 let rec eval n_vars term point =
   match term with
   | Var i ->
