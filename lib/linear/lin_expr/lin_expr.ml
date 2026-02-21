@@ -4,6 +4,8 @@ type t = { expr : Q.t list (* [q_n; ...; q_1; q_0] *); dim : int }
 let dim_mismatch_err =
   "dimension mismatch (expressions must have the same dimension)"
 
+let negative_dim_err = "dimension cannot be negative"
+
 (* Constructors *)
 let from_list list =
   let len = List.length list in
@@ -16,33 +18,47 @@ let from_list list =
 let as_list { expr; _ } = expr
 let dim { dim; _ } = dim
 
+let leading_coeff { expr; _ } =
+  (* invariant: expr is non-empty *)
+  List.hd expr
+
+let not_leading_coeffs { expr; _ } =
+  (* invariant: expr is non-empty *)
+  List.tl expr
+
 (* Special expressions *)
-let zero dim = { expr = List.init (succ dim) (fun _ -> Q.zero); dim }
+let zero dim =
+  if dim < 0 then invalid_arg ("Linear_expr.zero: " ^ negative_dim_err)
+  else from_list (List.init (succ dim) (fun _ -> Q.zero))
 
 let one dim =
-  {
-    expr = List.init (succ dim) (fun i -> if i = dim then Q.one else Q.zero);
-    dim;
-  }
+  if dim < 0 then invalid_arg ("Linear_expr.one: " ^ negative_dim_err)
+  else
+    from_list
+      (List.init (succ dim) (fun i -> if i = dim then Q.one else Q.zero))
 
 let x dim i =
-  {
-    expr = List.init (succ dim) (fun j -> if j = dim - i then Q.one else Q.zero);
-    dim;
-  }
+  if dim < 1 then invalid_arg "Linear_expr.x: dimension must be >= 1"
+  else if i < 1 then invalid_arg "Linear_expr.x: variable index must be >= 1"
+  else if i > dim then
+    invalid_arg "Linear_expr.x: variable index must be <= dim"
+  else
+    from_list
+      (List.init (succ dim) (fun j -> if j = dim - i then Q.one else Q.zero))
 
 (* Operators *)
 let equal expr1 expr2 =
-  if expr1.dim <> expr2.dim then
+  if dim expr1 <> dim expr2 then
     invalid_arg ("Linear_expr.equal: " ^ dim_mismatch_err)
   else
     List.fold_left ( && ) true
-      (List.map2 (fun q r -> Q.equal q r) expr1.expr expr2.expr)
+      (List.map2 (fun q r -> Q.equal q r) (as_list expr1) (as_list expr2))
 
-let mul_by c expr = { expr with expr = List.map (fun q -> Q.mul c q) expr.expr }
+let mul_by c expr =
+  { expr with expr = List.map (fun q -> Q.mul c q) (as_list expr) }
 
 let add expr1 expr2 =
-  if expr1.dim <> expr2.dim then
+  if dim expr1 <> dim expr2 then
     invalid_arg ("Linear_expr.add: " ^ dim_mismatch_err)
   else
     let rec aux acc = function
@@ -50,16 +66,16 @@ let add expr1 expr2 =
       | q :: qs, r :: rs -> aux (Q.add q r :: acc) (qs, rs)
       | _, [] | [], _ -> assert false
     in
-    { expr1 with expr = aux [] (expr1.expr, expr2.expr) }
+    from_list (aux [] (as_list expr1, as_list expr2))
 
 let sub expr1 expr2 =
-  if expr1.dim <> expr2.dim then
+  if dim expr1 <> dim expr2 then
     invalid_arg ("Linear_expr.sub: " ^ dim_mismatch_err)
   else add expr1 (mul_by Q.minus_one expr2)
 
 (* Functions *)
 let eval expr point =
-  if expr.dim <> Point.dim point then
+  if dim expr <> Point.dim point then
     invalid_arg
       "Linear_expr.eval: dimension mismatch (expression and point must have \
        the same dimension)"
@@ -69,37 +85,34 @@ let eval expr point =
       | q :: qs, r :: rs -> aux (Q.add acc (Q.mul q r)) (qs, rs)
       | _, [] | [], _ -> assert false
     in
-    aux Q.zero (expr.expr, Point.as_reversed_list point)
+    aux Q.zero (as_list expr, Point.as_reversed_list point)
 
 let sub_last expr1 expr2 : t =
-  if expr1.dim <> expr2.dim then
+  if dim expr1 <> dim expr2 then
     invalid_arg ("Linear_expr.sub_last: " ^ dim_mismatch_err)
-  else if expr1.dim = 0 then expr1
+  else if dim expr1 = 0 then expr1
     (* no substitution is possible for constant expressions *)
   else
-    (* invariant: expr1.expr is non-empty *)
-    let q_n = List.hd expr1.expr and r_n = List.hd expr2.expr in
+    let q_n = leading_coeff expr1 and r_n = leading_coeff expr2 in
     let rec aux acc = function
       | [], [] -> List.rev acc
       | q :: qs, r :: rs -> aux (Q.add (Q.mul q_n r) q :: acc) (qs, rs)
       | _, [] | [], _ -> assert false
     in
-    (* invariant: expr1.expr is non-empty *)
-    let expr = aux [ Q.mul q_n r_n ] (List.tl expr1.expr, List.tl expr2.expr) in
-    { expr1 with expr }
+    (* invariant: as_list expr1 is non-empty *)
+    from_list
+      (aux
+         [ Q.mul q_n r_n ]
+         (not_leading_coeffs expr1, not_leading_coeffs expr2))
 
 let reduce_dim expr =
-  if expr.dim = 0 then
+  if dim expr = 0 then
     invalid_arg
       "Lin_expr.reduce_dim: Cannot reduce the dimension of a constant-only \
        linear expression"
-  else
-    {
-      expr = List.tl expr.expr (* invariant: expr1.expr is non-empty *);
-      dim = pred expr.dim;
-    }
+  else from_list (not_leading_coeffs expr)
 
-let extend_dim expr v = { expr = v :: expr.expr; dim = succ expr.dim }
+let extend_dim expr v = from_list (v :: as_list expr)
 
 let find_supremum_term terms point =
   let rec aux c_term c_min = function
@@ -140,7 +153,8 @@ let to_string expr =
     if n = 0 then subs.(0) else aux "" n
   in
 
-  if is_const expr.expr then Q.to_string (List.hd (List.rev expr.expr))
+  if is_const (as_list expr) then
+    Q.to_string (List.hd (List.rev (as_list expr)))
   else
     let first = ref true in
     let rec aux acc = function
@@ -149,7 +163,7 @@ let to_string expr =
       | [ q_0 ] ->
           (* Add non-zero constant to non-constant linear expression *)
           aux (acc ^ " " ^ q_to_sign q_0 ^ " " ^ Q.to_string (Q.abs q_0)) []
-      | q :: qs when List.length qs = expr.dim || !first ->
+      | q :: qs when List.length qs = dim expr || !first ->
           (* Add first element of linear expression *)
           first := false;
 
@@ -163,6 +177,6 @@ let to_string expr =
            ^ int_to_subscript i)
             qs
     in
-    aux "" expr.expr
+    aux "" (as_list expr)
 
 let print expr = print_string (to_string expr)
