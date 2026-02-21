@@ -1,3 +1,15 @@
+(* CONSTRUCTORS AND GETTERS *)
+let%test "from_list_as_list" =
+  let coeffs = [ Q.of_int 2; Q.of_int 3; Q.of_int 4 ] in
+  let expr = Lin_expr.from_list coeffs in
+  Lin_expr.dim expr = 2 && Lin_expr.as_list expr = coeffs
+
+let%test "dim" =
+  let expr1 =
+    Lin_expr.from_list [ Q.of_int 1; Q.of_int 2; Q.of_int 3; Q.of_int 1 ]
+  and expr2 = Lin_expr.from_list [ Q.zero ] in
+  Lin_expr.dim expr1 = 3 && Lin_expr.dim expr2 = 0
+
 (* SPECIAL EXPRESSIONS *)
 let%test "zero" =
   let expr = Lin_expr.zero 2
@@ -15,6 +27,12 @@ let%test "x" =
   Lin_expr.equal expr result
 
 (* OPERATORS *)
+let%test "equal" =
+  let expr1 = Lin_expr.from_list [ Q.of_int 1; Q.of_int 2; Q.of_int 3 ]
+  and expr2 = Lin_expr.from_list [ Q.of_int 1; Q.of_int 2; Q.of_int 3 ]
+  and expr3 = Lin_expr.from_list [ Q.of_int 1; Q.of_int 2; Q.of_int 4 ] in
+  Lin_expr.equal expr1 expr2 && not (Lin_expr.equal expr1 expr3)
+
 let%test "add" =
   (* (y + x + 1) + (y + 2x + 3) = 2y + 3x + 4 *)
   let expr1 = Lin_expr.from_list (List.init 3 (fun _ -> Q.of_int 1))
@@ -29,6 +47,16 @@ let%test "mul_by" =
     Lin_expr.mul_by (Q.of_int 10)
       (Lin_expr.from_list [ Q.of_int 1; Q.of_int 2; Q.of_int 3 ])
   and result = Lin_expr.from_list [ Q.of_int 10; Q.of_int 20; Q.of_int 30 ] in
+  Lin_expr.equal expr result
+
+let%test "sub" =
+  (* (10y - 5x + 3) - (-7.5x + 4) = 10y + 2.5x - 1 *)
+  let expr1 = Lin_expr.from_list [ Q.of_int 10; Q.of_int (-5); Q.of_int 3 ]
+  and expr2 = Lin_expr.from_list [ Q.zero; Q.of_float (-7.5); Q.of_int 4 ] in
+  let expr = Lin_expr.sub expr1 expr2
+  and result =
+    Lin_expr.from_list [ Q.of_int 10; Q.of_float 2.5; Q.minus_one ]
+  in
   Lin_expr.equal expr result
 
 (* FUNCTIONS *)
@@ -64,3 +92,46 @@ let%test "reduce_dim" =
   let expr = Lin_expr.from_list [ Q.of_int 7; Q.of_int 5; Q.of_int 1 ]
   and result = Lin_expr.from_list [ Q.of_int 5; Q.of_int 1 ] in
   Lin_expr.equal (Lin_expr.reduce_dim expr) result
+
+let%test "extend_dim" =
+  let expr = Lin_expr.from_list [ Q.of_int 7; Q.of_int 5; Q.of_int 1 ]
+  and v = Q.of_float 0.5 in
+  let extended = Lin_expr.extend_dim expr v
+  and result =
+    Lin_expr.from_list [ Q.of_float 0.5; Q.of_int 7; Q.of_int 5; Q.of_int 1 ]
+  in
+  Lin_expr.equal extended result
+  && Lin_expr.dim extended = Lin_expr.dim expr + 1
+
+let%test "find_supremum_dim" =
+  let result =
+    Lin_expr.from_list [ Q.of_float 2.4; Q.of_float 2.4; Q.of_float 2.4 ]
+  in
+  let terms =
+    [
+      Lin_expr.from_list [ Q.of_float 2.5; Q.of_float 2.5; Q.of_float 2.5 ];
+      Lin_expr.from_list [ Q.of_float 2.75; Q.of_float 2.75; Q.of_float 2.75 ];
+      Lin_expr.from_list [ Q.of_float 2.45; Q.of_float 2.45; Q.of_float 2.45 ];
+      result;
+      Lin_expr.from_list [ Q.of_float 2.5; Q.of_float 2.5; Q.of_float 2.5 ];
+      Lin_expr.from_list [ Q.of_float 2.75; Q.of_float 2.75; Q.of_float 2.75 ];
+      Lin_expr.from_list [ Q.of_float 2.45; Q.of_float 2.45; Q.of_float 2.45 ];
+    ]
+  and point = Point.from_list [ Q.of_int 2; Q.of_int 2 ] in
+  match Lin_expr.find_supremum_term terms point with
+  | Some term -> Lin_expr.equal term result
+  | None -> false
+
+(* PRINT *)
+let%test "to_string" =
+  let expr1 = Lin_expr.from_list [ Q.zero; Q.zero; Q.of_float (-2.5) ]
+  and result1 = "-5/2"
+  and expr2 = Lin_expr.from_list [ Q.minus_one; Q.zero; Q.of_float 2.5 ]
+  and result2 = "-x₂ + 5/2"
+  and expr3 =
+    Lin_expr.from_list
+      [ Q.of_float 2.5; Q.zero; Q.of_int 1; Q.of_int (-2); Q.of_int 3 ]
+  and result3 = "5/2 x₄ + x₂ - 2x₁ + 3" in
+  Lin_expr.to_string expr1 = result1
+  && Lin_expr.to_string expr2 = result2
+  && Lin_expr.to_string expr3 = result3
