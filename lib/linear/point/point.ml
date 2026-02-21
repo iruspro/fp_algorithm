@@ -1,10 +1,8 @@
 type t = { point : Q.t list (* [r_n; ...; r_1] *); dim : int }
 
 (* Constructors *)
-let from_list list = { point = List.rev list; dim = List.length list }
-
-let from_array arr =
-  { point = List.rev (Array.to_list arr); dim = Array.length arr }
+let from_list coords = { point = List.rev coords; dim = List.length coords }
+let from_reversed_list coords = { point = coords; dim = List.length coords }
 
 (* Getters *)
 let as_list { point; _ } = List.rev point
@@ -12,7 +10,7 @@ let as_reversed_list { point; _ } = point
 let dim { dim; _ } = dim
 
 (* Functions *)
-let extend_dim point v = { point = v :: point.point; dim = succ point.dim }
+let extend_dim point coord = from_reversed_list (coord :: as_reversed_list point)
 
 (* Print *)
 let to_string point =
