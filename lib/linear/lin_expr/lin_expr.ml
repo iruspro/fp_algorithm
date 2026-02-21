@@ -11,7 +11,7 @@ let from_list list =
   let len = List.length list in
   if len = 0 then
     invalid_arg
-      "Linear_expr.from_list: empty coefficient list (expected [q_n; ...; q_0])"
+      "Lin_expr.from_list: empty coefficient list (expected [q_n; ...; q_0])"
   else { expr = list; dim = len - 1 }
 
 (* Getters *)
@@ -28,20 +28,20 @@ let not_leading_coeffs { expr; _ } =
 
 (* Special expressions *)
 let zero dim =
-  if dim < 0 then invalid_arg ("Linear_expr.zero: " ^ negative_dim_err)
+  if dim < 0 then invalid_arg ("Lin_expr.zero: " ^ negative_dim_err)
   else from_list (List.init (succ dim) (fun _ -> Q.zero))
 
 let one dim =
-  if dim < 0 then invalid_arg ("Linear_expr.one: " ^ negative_dim_err)
+  if dim < 0 then invalid_arg ("Lin_expr.one: " ^ negative_dim_err)
   else
     from_list
       (List.init (succ dim) (fun i -> if i = dim then Q.one else Q.zero))
 
 let x dim i =
-  if dim < 1 then invalid_arg "Linear_expr.x: dimension must be >= 1"
-  else if i < 1 then invalid_arg "Linear_expr.x: variable index must be >= 1"
+  if dim < 1 then invalid_arg "Lin_expr.x: dimension must be >= 1"
+  else if i < 1 then invalid_arg "Lin_expr.x: variable index must be >= 1"
   else if i > dim then
-    invalid_arg "Linear_expr.x: variable index must be <= dim"
+    invalid_arg "Lin_expr.x: variable index must be <= dim"
   else
     from_list
       (List.init (succ dim) (fun j -> if j = dim - i then Q.one else Q.zero))
@@ -49,7 +49,7 @@ let x dim i =
 (* Operators *)
 let equal expr1 expr2 =
   if dim expr1 <> dim expr2 then
-    invalid_arg ("Linear_expr.equal: " ^ dim_mismatch_err)
+    invalid_arg ("Lin_expr.equal: " ^ dim_mismatch_err)
   else
     List.fold_left ( && ) true
       (List.map2 (fun q r -> Q.equal q r) (as_list expr1) (as_list expr2))
@@ -59,7 +59,7 @@ let mul_by c expr =
 
 let add expr1 expr2 =
   if dim expr1 <> dim expr2 then
-    invalid_arg ("Linear_expr.add: " ^ dim_mismatch_err)
+    invalid_arg ("Lin_expr.add: " ^ dim_mismatch_err)
   else
     let rec aux acc = function
       | [], [] -> List.rev acc
@@ -70,14 +70,14 @@ let add expr1 expr2 =
 
 let sub expr1 expr2 =
   if dim expr1 <> dim expr2 then
-    invalid_arg ("Linear_expr.sub: " ^ dim_mismatch_err)
+    invalid_arg ("Lin_expr.sub: " ^ dim_mismatch_err)
   else add expr1 (mul_by Q.minus_one expr2)
 
 (* Functions *)
 let eval expr point =
   if dim expr <> Point.dim point then
     invalid_arg
-      "Linear_expr.eval: dimension mismatch (expression and point must have \
+      "Lin_expr.eval: dimension mismatch (expression and point must have \
        the same dimension)"
   else
     let rec aux acc = function
@@ -89,7 +89,7 @@ let eval expr point =
 
 let sub_last expr1 expr2 : t =
   if dim expr1 <> dim expr2 then
-    invalid_arg ("Linear_expr.sub_last: " ^ dim_mismatch_err)
+    invalid_arg ("Lin_expr.sub_last: " ^ dim_mismatch_err)
   else if dim expr1 = 0 then expr1
     (* no substitution is possible for constant expressions *)
   else
