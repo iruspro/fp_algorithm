@@ -12,6 +12,12 @@ let dim { dim; _ } = dim
 (* Functions *)
 let extend_dim point coord = from_reversed_list (coord :: as_reversed_list point)
 
+let flip_last point =
+  let coords = as_reversed_list point in
+  match coords with
+  | [] -> point
+  | r_n :: rs -> from_reversed_list (Q.sub Q.one r_n :: rs)
+
 (* Print *)
 let to_string point =
   let rec aux acc = function

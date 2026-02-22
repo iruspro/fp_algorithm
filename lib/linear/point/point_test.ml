@@ -32,6 +32,13 @@ let%test "extend_dim on empty point" =
   let p' = extend_dim p Q.one in
   dim p' = 1 && as_list p' = [ Q.one ]
 
+let%test "flip_last" =
+  let p1 = from_list []
+  and result1 = []
+  and p2 = from_list [ Q.( // ) 2 3; Q.( // ) 1 3 ]
+  and result2 = [ Q.( // ) 2 3; Q.( // ) 2 3 ] in
+  as_list (flip_last p1) = result1 && as_list (flip_last p2) = result2
+
 (* PRINT *)
 let%test "to_string" =
   let p1 = from_list []
