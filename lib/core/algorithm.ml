@@ -171,20 +171,6 @@ let lfp (local_alg : Local_alg.t) point (* r *) =
   aux [] zero
 
 let gfp (local_alg : Local_alg.t) point =
-  let dim = pred (Point.dim point) in
-
-  let dual_local_alg point =
-    let cle = local_alg point in
-    Cond_lin_expr.dual dim cle
-  in
-
-  let cle = lfp dual_local_alg point in
-
-  let constraints = Cond_lin_expr.constraints cle
-  and expr =
-    Lin_expr.add
-      (Lin_expr.one (pred dim))
-      (Lin_expr.mul_by Q.minus_one (Cond_lin_expr.expr cle))
-  in
-
-  Cond_lin_expr.construct constraints expr
+  let cle = lfp (Local_alg.dual local_alg) point in
+  let expr = Lin_expr.complement (Cond_lin_expr.expr cle) in
+  Cond_lin_expr.with_expr cle expr
