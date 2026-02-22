@@ -140,18 +140,7 @@ let to_string (ineq : t) =
 (* ^ " "
   ^ type_to_str (n_type ineq) *)
 
-let to_string_many (ineqs : t list) =
-  let len = List.length ineqs in
-  let ineqs =
-    List.mapi
-      (fun i ineq ->
-        if i <> len - 1 then to_string ineq ^ "\n" else to_string ineq)
-      ineqs
-  in
-  "{\n" ^ List.fold_left ( ^ ) "" ineqs ^ "\n}"
-
 let print ineq = print_endline (to_string ineq)
-let print_many ineqs = print_endline (to_string_many ineqs)
 
 (* Tests *)
 (* construct *)

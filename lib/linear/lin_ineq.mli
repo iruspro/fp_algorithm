@@ -21,6 +21,4 @@ val negate : t -> t
 val reverse : t -> t
 val extract_rh_sides : t list -> Lin_expr.t list
 val to_string : t -> string
-val to_string_many : t list -> string
 val print : t -> unit
-val print_many : t list -> unit
