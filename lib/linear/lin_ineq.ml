@@ -117,6 +117,12 @@ let reverse ineq =
 
 let extract_rh_sides = List.map (fun ineq -> ineq.rhs)
 
+let flip_last ineq =
+  let lhs = Lin_expr.flip_last (lhs ineq)
+  and rhs = Lin_expr.flip_last (rhs ineq)
+  and rel = rel ineq in
+  construct lhs rhs rel
+
 let rel_to_str rel =
   match rel with
   | LessThan -> "<"
