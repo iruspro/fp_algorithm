@@ -95,6 +95,10 @@ val complement : t -> t
 (** [complement expr] returns the linear expression obtained by subtracting
     [expr] from the constant expression equal to [1]. *)
 
+val flip_last : t -> t
+(** [flip_last expr] performs the substitution [x_n -> 1 - x_n] in the linear
+    expression [expr]. *)
+
 (** {2 Print} *)
 
 val to_string : t -> string

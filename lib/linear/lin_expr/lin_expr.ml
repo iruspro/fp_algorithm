@@ -127,6 +127,17 @@ let complement expr =
   let one = one (dim expr) in
   sub one expr
 
+let flip_last expr =
+  if dim expr = 0 then expr
+  else
+    let q_n = leading_coeff expr and coeffs' = not_leading_coeffs expr in
+    let rec aux acc = function
+      | [] -> List.rev acc
+      | [ q_0 ] -> aux (Q.add q_0 q_n :: acc) []
+      | q :: qs -> aux (q :: acc) qs
+    in
+    from_list (aux [ Q.neg q_n ] coeffs')
+
 (* Print *)
 let to_string expr =
   let is_const expr =

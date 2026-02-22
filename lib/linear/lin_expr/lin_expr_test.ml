@@ -124,6 +124,13 @@ let%test "complement" =
   and result2 = from_list [ Q.of_int (-7); Q.of_int 5; Q.of_int 4 ] in
   equal (complement expr1) result1 && equal (complement expr2) result2
 
+let%test "flip_last" =
+  let expr1 = flip_last (from_list [ Q.minus_one ])
+  and result1 = from_list [ Q.minus_one ]
+  and expr2 = flip_last (from_list [ Q.of_int (-7); Q.of_int 5; Q.of_int 2 ])
+  and result2 = from_list [ Q.of_int 7; Q.of_int 5; Q.of_int (-5) ] in
+  equal expr1 result1 && equal expr2 result2
+
 (* PRINT *)
 let%test "to_string" =
   let expr1 = from_list [ Q.zero; Q.zero; Q.of_float (-2.5) ]
