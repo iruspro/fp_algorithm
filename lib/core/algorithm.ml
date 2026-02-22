@@ -3,8 +3,8 @@ open Linear
 let lfp (local_alg : Local_alg.t) point (* r *) =
   let new_dim = Point.dim point in
   let zero = Lin_expr.zero new_dim
-  and ineq_constructor = Lin_ineq.construct new_dim
-  and constraints_maker = Lin_ineq.make_constraints new_dim in
+  and ineq_constructor = Lin_ineq.construct
+  and constraints_maker = Lin_ineq.make_constraints in
 
   let sub_and_reduce expr1 expr2 =
     Lin_expr.reduce_dim (Lin_expr.sub_last expr1 expr2)

@@ -13,8 +13,8 @@ val lhs : t -> Lin_expr.t
 val rhs : t -> Lin_expr.t
 val rel : t -> rel
 val n_type : t -> n_type
-val construct : int -> Lin_expr.t -> Lin_expr.t -> rel -> t
-val make_constraints : int -> Lin_expr.t -> Lin_expr.t list -> rel -> t list
+val construct : Lin_expr.t -> Lin_expr.t -> rel -> t
+val make_constraints : Lin_expr.t -> Lin_expr.t list -> rel -> t list
 val is_satisfied : t -> Point.t -> bool
 val find_unsatisfied : t list -> Point.t -> t option
 val negate : t -> t

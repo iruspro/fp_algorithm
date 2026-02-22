@@ -44,8 +44,8 @@ let rec eval term point =
 
       let ineqs =
         [
-          Lin_ineq.construct n_vars (Lin_expr.zero n_vars) x Lin_ineq.LessEqual;
-          Lin_ineq.construct n_vars x (Lin_expr.one n_vars) Lin_ineq.LessEqual;
+          Lin_ineq.construct (Lin_expr.zero n_vars) x Lin_ineq.LessEqual;
+          Lin_ineq.construct x (Lin_expr.one n_vars) Lin_ineq.LessEqual;
         ]
       in
       Cond_lin_expr.construct ineqs x
@@ -65,7 +65,7 @@ let rec eval term point =
       and constraints2 = Cond_lin_expr.constraints cle2
       and expr2 = Cond_lin_expr.expr cle2 in
 
-      let ineq = Lin_ineq.construct n_vars expr1 expr2 Lin_ineq.LessEqual in
+      let ineq = Lin_ineq.construct expr1 expr2 Lin_ineq.LessEqual in
       if Lin_ineq.is_satisfied ineq point then
         Cond_lin_expr.construct ((ineq :: constraints1) @ constraints2) expr2
       else
@@ -80,7 +80,7 @@ let rec eval term point =
       and constraints2 = Cond_lin_expr.constraints cle2
       and expr2 = Cond_lin_expr.expr cle2 in
 
-      let ineq = Lin_ineq.construct n_vars expr1 expr2 Lin_ineq.LessEqual in
+      let ineq = Lin_ineq.construct expr1 expr2 Lin_ineq.LessEqual in
       if Lin_ineq.is_satisfied ineq point then
         Cond_lin_expr.construct (ineq :: (constraints1 @ constraints2)) expr1
       else
@@ -96,7 +96,7 @@ let rec eval term point =
       and expr2 = Cond_lin_expr.expr cle2 in
 
       let expr = Lin_expr.add expr1 expr2 and one = Lin_expr.one n_vars in
-      let ineq = Lin_ineq.construct n_vars expr one Lin_ineq.LessEqual in
+      let ineq = Lin_ineq.construct expr one Lin_ineq.LessEqual in
       if Lin_ineq.is_satisfied ineq point then
         Cond_lin_expr.construct ((ineq :: constraints1) @ constraints2) expr
       else
@@ -115,7 +115,7 @@ let rec eval term point =
         Lin_expr.add (Lin_expr.add expr1 expr2)
           (Lin_expr.mul_by Q.minus_one (Lin_expr.one n_vars))
       and zero = Lin_expr.zero n_vars in
-      let ineq = Lin_ineq.construct n_vars expr zero Lin_ineq.GreaterEqual in
+      let ineq = Lin_ineq.construct expr zero Lin_ineq.GreaterEqual in
       if Lin_ineq.is_satisfied ineq point then
         Cond_lin_expr.construct ((ineq :: constraints1) @ constraints2) expr
       else

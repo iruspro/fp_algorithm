@@ -34,9 +34,10 @@ let compare val1 val2 rel =
   | GreaterThan -> val1 > val2
   | GreaterEqual -> val1 >= val2
 
-let construct dim lhs rhs rel =
+let construct lhs rhs rel =
   let open Q in
   (* TODO: delete *)
+  let dim = Lin_expr.dim lhs in
   let x_n = if Int.equal dim 0 then Lin_expr.one dim else Lin_expr.x dim dim in
   (* let x_n = Q.one :: Lin_expr.zero (pred dim) in *)
   match (Lin_expr.as_list lhs, Lin_expr.as_list rhs) with
@@ -66,10 +67,10 @@ let construct dim lhs rhs rel =
       { lhs; rhs; rel; n_type = rel_to_n_type rel }
   | _ -> failwith "A linear expression must have at least one coefficient"
 
-let make_constraints dim lhs all_rhs rel =
+let make_constraints lhs all_rhs rel =
   let rec aux acc = function
     | [] -> acc
-    | rhs :: all_rhs -> aux (construct dim lhs rhs rel :: acc) all_rhs
+    | rhs :: all_rhs -> aux (construct lhs rhs rel :: acc) all_rhs
   in
   aux [] all_rhs
 
