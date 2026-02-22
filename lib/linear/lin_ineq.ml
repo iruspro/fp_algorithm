@@ -37,7 +37,7 @@ let compare val1 val2 rel =
 let construct dim lhs rhs rel =
   let open Q in
   (* TODO: delete *)
-  let x_n = Lin_expr.x dim dim in
+  let x_n = if Int.equal dim 0 then Lin_expr.one dim else Lin_expr.x dim dim in
   (* let x_n = Q.one :: Lin_expr.zero (pred dim) in *)
   match (Lin_expr.as_list lhs, Lin_expr.as_list rhs) with
   | [ _ ], [ _ ] -> { lhs; rhs; rel; n_type = WithoutLast }
