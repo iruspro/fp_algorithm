@@ -40,8 +40,7 @@ let one dim =
 let x dim i =
   if dim < 1 then invalid_arg "Lin_expr.x: dimension must be >= 1"
   else if i < 1 then invalid_arg "Lin_expr.x: variable index must be >= 1"
-  else if i > dim then
-    invalid_arg "Lin_expr.x: variable index must be <= dim"
+  else if i > dim then invalid_arg "Lin_expr.x: variable index must be <= dim"
   else
     from_list
       (List.init (succ dim) (fun j -> if j = dim - i then Q.one else Q.zero))
@@ -77,8 +76,8 @@ let sub expr1 expr2 =
 let eval expr point =
   if dim expr <> Point.dim point then
     invalid_arg
-      "Lin_expr.eval: dimension mismatch (expression and point must have \
-       the same dimension)"
+      "Lin_expr.eval: dimension mismatch (expression and point must have the \
+       same dimension)"
   else
     let rec aux acc = function
       | [ q_0 ], [] -> Q.add acc q_0
