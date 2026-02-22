@@ -124,6 +124,10 @@ let find_supremum_term terms point =
   in
   aux None Q.inf terms
 
+let complement expr =
+  let one = one (dim expr) in
+  sub one expr
+
 (* Print *)
 let to_string expr =
   let is_const expr =

@@ -91,6 +91,10 @@ val find_supremum_term : t list -> Point.t -> t option
     linear expression in [terms] that evaluates to the minimal value at [point].
     Returns [None] if [terms] is empty. *)
 
+val complement : t -> t
+(** [complement expr] returns the linear expression obtained by subtracting
+    [expr] from the constant expression equal to [1]. *)
+
 (** {2 Print} *)
 
 val to_string : t -> string

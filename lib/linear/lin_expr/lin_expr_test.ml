@@ -114,6 +114,16 @@ let%test "find_supremum_dim" =
   | Some term -> equal term result
   | None -> false
 
+let%test "complement" =
+  let expr1 = from_list [ Q.( // ) 1 3 ]
+  and result1 = from_list [ Q.( // ) 2 3 ]
+  and
+      (* 7y - 5x - 3 *)
+      expr2 =
+    from_list [ Q.of_int 7; Q.of_int (-5); Q.of_int (-3) ]
+  and result2 = from_list [ Q.of_int (-7); Q.of_int 5; Q.of_int 4 ] in
+  equal (complement expr1) result1 && equal (complement expr2) result2
+
 (* PRINT *)
 let%test "to_string" =
   let expr1 = from_list [ Q.zero; Q.zero; Q.of_float (-2.5) ]
