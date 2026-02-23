@@ -14,3 +14,5 @@ type t =
 
 val n_free_vars : t -> int
 val eval : t -> Point.t -> Cond_lin_expr.t
+val to_string : t -> string
+val print : t -> unit

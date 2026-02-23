@@ -1,5 +1,6 @@
 open Core
 open Linear
+open Utils
 
 type t =
   | Var of int (* x_i *)
@@ -124,3 +125,24 @@ let rec eval term point =
           zero
   | Mu term -> Algorithm.lfp (eval term) point
   | Nu term -> Algorithm.gfp (eval term) point
+
+let rec to_string term =
+  match term with
+  | Var i -> "x" ^ Pprint.int_to_subscript i
+  | Zero -> "0"
+  | One -> "1"
+  | Scm (q, term) ->
+      let s = Q.to_string q in
+      s ^ "(" ^ to_string term ^ ")"
+  | Lwd (term1, term2) ->
+      "(" ^ to_string term1 ^ ") ⊔ (" ^ to_string term2 ^ ")"
+  | Lwc (term1, term2) ->
+      "(" ^ to_string term1 ^ ") ⊓ (" ^ to_string term2 ^ ")"
+  | Lsd (term1, term2) ->
+      "(" ^ to_string term1 ^ ") ⊕ (" ^ to_string term2 ^ ")"
+  | Lsc (term1, term2) ->
+      "(" ^ to_string term1 ^ ") ⊙ (" ^ to_string term2 ^ ")"
+  | Mu term -> "μy.(" ^ to_string term ^ ")"
+  | Nu term -> "vy.(" ^ to_string term ^ ")"
+
+let print term = print_string (to_string term)
