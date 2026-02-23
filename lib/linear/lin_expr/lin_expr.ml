@@ -1,3 +1,5 @@
+open Utils
+
 type t = { expr : Q.t list (* [q_n; ...; q_1; q_0] *); dim : int }
 
 (* Constants *)
@@ -156,17 +158,6 @@ let to_string expr =
     if Q.equal (Q.abs q) Q.one then "" else Q.to_string (Q.abs q) ^ sep
   in
 
-  let int_to_subscript n =
-    let subs = [| "₀"; "₁"; "₂"; "₃"; "₄"; "₅"; "₆"; "₇"; "₈"; "₉" |] in
-    let rec aux acc = function
-      | 0 -> acc
-      | n ->
-          let digit = n mod 10 in
-          aux (subs.(digit) ^ acc) (n / 10)
-    in
-    if n = 0 then subs.(0) else aux "" n
-  in
-
   if is_const (as_list expr) then
     Q.to_string (List.hd (List.rev (as_list expr)))
   else
@@ -182,13 +173,13 @@ let to_string expr =
           first := false;
 
           let i = List.length qs and sign = if Q.lt q Q.zero then "-" else "" in
-          aux (acc ^ sign ^ q_to_coeff q ^ "x" ^ int_to_subscript i) qs
+          aux (acc ^ sign ^ q_to_coeff q ^ "x" ^ Pprint.int_to_subscript i) qs
       | q :: qs ->
           (* Add i-th element of linear expression *)
           let i = List.length qs in
           aux
             (acc ^ " " ^ q_to_sign q ^ " " ^ q_to_coeff q ^ "x"
-           ^ int_to_subscript i)
+           ^ Pprint.int_to_subscript i)
             qs
     in
     aux "" (as_list expr)

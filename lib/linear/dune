@@ -3,7 +3,7 @@
 (library
  (name linear)
  (public_name fp_algorithm.linear)
- (libraries zarith)
+ (libraries zarith utils)
  (inline_tests)
  (preprocess
   (pps ppx_expect)))
