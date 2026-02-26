@@ -1,7 +1,7 @@
 (library
  (name mu_calc)
  (public_name fp_algorithm.mu_calc)
- (libraries zarith core linear utils)
+ (libraries zarith core linear common)
  (inline_tests)
  (preprocess
   (pps ppx_expect)))

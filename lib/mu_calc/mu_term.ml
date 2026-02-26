@@ -1,6 +1,6 @@
 open Core
 open Linear
-open Utils
+open Common
 
 type t =
   | Var of int (* x_i *)

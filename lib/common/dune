@@ -1,6 +1,6 @@
 (library
- (name utils)
- (public_name fp_algorithm.utils)
+ (name common)
+ (public_name fp_algorithm.common)
  (inline_tests)
  (preprocess
   (pps ppx_expect)))

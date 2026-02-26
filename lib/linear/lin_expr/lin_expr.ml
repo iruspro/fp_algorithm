@@ -1,4 +1,4 @@
-open Utils
+open Common
 
 type t = { expr : Q.t list (* [q_n; ...; q_1; q_0] *) }
 
