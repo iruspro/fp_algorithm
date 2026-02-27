@@ -25,6 +25,9 @@ let x i =
     from_list (Q.one :: zeros)
 
 (* GETTERS *)
+
+(** [as_list expr] returns the non empty list of coefficients of [expr] in the
+    form [q_n; ...; q_1; q_0], where [q_n <> 0] if [n > 0]. *)
 let as_list expr = expr.expr
 
 (** [as_rev_list expr] returns the list of coefficients of [expr] in the form

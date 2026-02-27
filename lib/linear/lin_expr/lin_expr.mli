@@ -21,10 +21,6 @@ val x : int -> t
 
 (** {2 Getters} *)
 
-val as_list : t -> Q.t list
-(** [as_list expr] returns the non empty list of coefficients of [expr] in the
-    form [q_n; ...; q_1; q_0], where [q_n <> 0] if [n > 0]. *)
-
 val dim : t -> int
 (** [dim expr] returns the largest index [n] such that [q_n <> 0] in
     [q_n x_n + ... + q_1 x_1 + q_0], or 0 if the constant term [q_0] is the only
