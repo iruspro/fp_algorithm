@@ -1,18 +1,16 @@
 type t = { constraints : Lin_ineq.t list; expr : Lin_expr.t }
 
+(* CONSTRUCTORS *)
 let construct constraints expr = { constraints; expr }
+
+(* GETTERS *)
 let constraints cle = cle.constraints
 let expr cle = cle.expr
 
-(* Functions *)
+(* FUNCTIONS *)
 let with_expr cle expr = construct (constraints cle) expr
 
-let flip_last cle =
-  let constraints = List.map Lin_ineq.flip_last (constraints cle)
-  and expr = Lin_expr.flip_last (expr cle) in
-  construct constraints expr
-
-(* Print *)
+(* PRINT *)
 let to_string cle =
   let ineqs = constraints cle and expr = expr cle in
 
