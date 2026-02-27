@@ -1,24 +1,18 @@
-type t = { point : Q.t list (* [r_n; ...; r_1] *); dim : int }
+type t = { coords : Q.t list (* [r_n; ...; r_1] *) }
 
-(* Constructors *)
-let from_list coords = { point = List.rev coords; dim = List.length coords }
-let from_reversed_list coords = { point = coords; dim = List.length coords }
+(* CONSTRUCTORS *)
+let from_list coords = { coords = List.rev coords }
+let from_reversed_list coords = { coords }
 
-(* Getters *)
-let as_list { point; _ } = List.rev point
-let as_reversed_list { point; _ } = point
-let dim { dim; _ } = dim
+(* GETTERS *)
+let as_list point = List.rev point.coords
+let as_reversed_list point = point.coords
+let dim point = List.length point.coords
 
-(* Functions *)
+(* FUNCTIONS *)
 let extend_dim point coord = from_reversed_list (coord :: as_reversed_list point)
 
-let flip_last point =
-  let coords = as_reversed_list point in
-  match coords with
-  | [] -> point
-  | r_n :: rs -> from_reversed_list (Q.sub Q.one r_n :: rs)
-
-(* Print *)
+(* PRINT *)
 let to_string point =
   let rec aux acc = function
     | [] -> acc ^ ")"

@@ -27,11 +27,6 @@ val extend_dim : t -> Q.t -> t
 (** [extend_dim point coord] returns the point in Q^(n+1) obtained from [point]
     in Q^n by appending the coordinate [coord] as the last component. *)
 
-val flip_last : t -> t
-(** [flip_last point] returns [point] with its last coordinate replaced by
-    [1 - r_n], where [r_n] is the last coordinate of [point]. If [point] is
-    0-dimensional [()], it is returned unchanged. *)
-
 (** {2 Print} *)
 
 val to_string : t -> string
