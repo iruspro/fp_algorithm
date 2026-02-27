@@ -8,6 +8,8 @@ let constraints cle = cle.constraints
 let expr cle = cle.expr
 
 (* FUNCTIONS *)
+let add_constraint cle ineq = construct (ineq :: constraints cle) (expr cle)
+let add_constraints cle ineqs = construct (constraints cle @ ineqs) (expr cle)
 let with_expr cle expr = construct (constraints cle) expr
 
 (* PRINT *)

@@ -20,6 +20,16 @@ val expr : t -> Lin_expr.t
 
 (** {2 Functions} *)
 
+val add_constraint : t -> Lin_ineq.t -> t
+(** [add_constraint cle ineq] returns a conditioned linear expression obtained
+    from [cle] by adding the linear inequality [ineq] to its set of constraints.
+*)
+
+val add_constraints : t -> Lin_ineq.t list -> t
+(** [add_constraints cle ineqs] returns a conditioned linear expression obtained
+    from [cle] by adding all linear inequalities in [ineqs] to its set of
+    constraints. *)
+
 val with_expr : t -> Lin_expr.t -> t
 (** [with_expr cle expr] returns a copy of [cle] with its expression replaced by
     [expr]. *)
