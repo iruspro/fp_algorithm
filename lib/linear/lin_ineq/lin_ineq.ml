@@ -1,6 +1,7 @@
 type rel = Lt | Le | Gt | Ge
 type t = { lhs : Lin_expr.t; rhs : Lin_expr.t; rel : rel; dim : int }
 
+let rev_rel = function Lt -> Gt | Le -> Ge | Gt -> Lt | Ge -> Le
 let neg_rel = function Lt -> Ge | Le -> Gt | Gt -> Le | Ge -> Lt
 
 let compare val1 val2 = function
@@ -25,7 +26,7 @@ let construct lhs rhs rel =
     let rhs = Lin_expr.sub rhs (Lin_expr.mul_by leading_coeff x) in
     (* Invariant: leading_coeff <> 0 if dim > 0 *)
     let rhs = Lin_expr.mul_by (Q.neg (Q.inv leading_coeff)) rhs
-    and rel = if Q.geq (Q.neg leading_coeff) Q.zero then rel else neg_rel rel in
+    and rel = if Q.geq (Q.neg leading_coeff) Q.zero then rel else rev_rel rel in
     { lhs = x; rhs; rel; dim }
 
 (* GETTERS *)
