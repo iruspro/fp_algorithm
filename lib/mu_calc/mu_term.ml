@@ -59,77 +59,85 @@ let strong_conj term1 term2 =
 let mu i term = Mu (i, term)
 let nu i term = Nu (i, term)
 
-let rec eval term point =
-  let dim = Point.dim point in
+let rec eval dim term point =
+  (* Sanity check *)
+  assert (dim = Point.dim point);
+
   match term with
   | Var i ->
-      let x = Lin_expr.x dim i in
+      let x = Lin_expr.x i in
 
       let ineqs =
         [
-          Lin_ineq.construct (Lin_expr.zero dim) x Lin_ineq.LessEqual;
-          Lin_ineq.construct x (Lin_expr.one dim) Lin_ineq.LessEqual;
+          Lin_ineq.construct (Lin_expr.const Q.zero) x Lin_ineq.Le;
+          Lin_ineq.construct x (Lin_expr.const Q.one) Lin_ineq.Le;
         ]
       in
       Cond_lin_expr.construct ineqs x
   (* TODO: Lin_expr.zero and Lin_expr.one without dim *)
-  | Zero -> Cond_lin_expr.construct [] (Lin_expr.zero dim)
-  | One -> Cond_lin_expr.construct [] (Lin_expr.one dim)
+  | Zero -> Cond_lin_expr.construct [] (Lin_expr.const Q.zero)
+  | One -> Cond_lin_expr.construct [] (Lin_expr.const Q.one)
   | Scm (q, term) ->
-      let cle = eval term point in
+      let cle = eval dim term point in
 
       (* TODO: add Cond_lin_expr.mul_by *)
       let constraints = Cond_lin_expr.constraints cle
       and expr = Cond_lin_expr.expr cle in
       Cond_lin_expr.construct constraints (Lin_expr.mul_by q expr)
   | Lwd (term1, term2) ->
-      let cle1 = eval term1 point and cle2 = eval term2 point in
+      let cle1 = eval dim term1 point and cle2 = eval dim term2 point in
 
       let constraints1 = Cond_lin_expr.constraints cle1
       and expr1 = Cond_lin_expr.expr cle1
       and constraints2 = Cond_lin_expr.constraints cle2
       and expr2 = Cond_lin_expr.expr cle2 in
 
-      let ineq = Lin_ineq.construct expr1 expr2 Lin_ineq.LessEqual in
-      if Lin_ineq.is_satisfied ineq point then
-        Cond_lin_expr.construct ((ineq :: constraints1) @ constraints2) expr2
+      let ineq = Lin_ineq.construct expr1 expr2 in
+      if Lin_ineq.is_satisfied (ineq Lin_ineq.Le) point then
+        Cond_lin_expr.construct
+          ((ineq Lin_ineq.Le :: constraints1) @ constraints2)
+          expr2
       else
         Cond_lin_expr.construct
-          ((Lin_ineq.reverse ineq :: constraints1) @ constraints2)
+          ((ineq Lin_ineq.Ge :: constraints1) @ constraints2)
           expr1
   | Lwc (term1, term2) ->
-      let cle1 = eval term1 point and cle2 = eval term2 point in
+      let cle1 = eval dim term1 point and cle2 = eval dim term2 point in
 
       let constraints1 = Cond_lin_expr.constraints cle1
       and expr1 = Cond_lin_expr.expr cle1
       and constraints2 = Cond_lin_expr.constraints cle2
       and expr2 = Cond_lin_expr.expr cle2 in
 
-      let ineq = Lin_ineq.construct expr1 expr2 Lin_ineq.LessEqual in
-      if Lin_ineq.is_satisfied ineq point then
-        Cond_lin_expr.construct (ineq :: (constraints1 @ constraints2)) expr1
+      let ineq = Lin_ineq.construct expr1 expr2 in
+      if Lin_ineq.is_satisfied (ineq Lin_ineq.Le) point then
+        Cond_lin_expr.construct
+          (ineq Lin_ineq.Le :: (constraints1 @ constraints2))
+          expr1
       else
         Cond_lin_expr.construct
-          (Lin_ineq.reverse ineq :: (constraints1 @ constraints2))
+          (ineq Lin_ineq.Ge :: (constraints1 @ constraints2))
           expr2
   | Lsd (term1, term2) ->
-      let cle1 = eval term1 point and cle2 = eval term2 point in
+      let cle1 = eval dim term1 point and cle2 = eval dim term2 point in
 
       let constraints1 = Cond_lin_expr.constraints cle1
       and expr1 = Cond_lin_expr.expr cle1
       and constraints2 = Cond_lin_expr.constraints cle2
       and expr2 = Cond_lin_expr.expr cle2 in
 
-      let expr = Lin_expr.add expr1 expr2 and one = Lin_expr.one dim in
-      let ineq = Lin_ineq.construct expr one Lin_ineq.LessEqual in
-      if Lin_ineq.is_satisfied ineq point then
-        Cond_lin_expr.construct ((ineq :: constraints1) @ constraints2) expr
+      let expr = Lin_expr.add expr1 expr2 and one = Lin_expr.const Q.one in
+      let ineq = Lin_ineq.construct expr one in
+      if Lin_ineq.is_satisfied (ineq Lin_ineq.Le) point then
+        Cond_lin_expr.construct
+          ((ineq Lin_ineq.Le :: constraints1) @ constraints2)
+          expr
       else
         Cond_lin_expr.construct
-          ((Lin_ineq.reverse ineq :: constraints1) @ constraints2)
+          ((ineq Lin_ineq.Ge :: constraints1) @ constraints2)
           one
   | Lsc (term1, term2) ->
-      let cle1 = eval term1 point and cle2 = eval term2 point in
+      let cle1 = eval dim term1 point and cle2 = eval dim term2 point in
 
       let constraints1 = Cond_lin_expr.constraints cle1
       and expr1 = Cond_lin_expr.expr cle1
@@ -138,17 +146,19 @@ let rec eval term point =
 
       let expr =
         Lin_expr.add (Lin_expr.add expr1 expr2)
-          (Lin_expr.mul_by Q.minus_one (Lin_expr.one dim))
-      and zero = Lin_expr.zero dim in
-      let ineq = Lin_ineq.construct expr zero Lin_ineq.GreaterEqual in
-      if Lin_ineq.is_satisfied ineq point then
-        Cond_lin_expr.construct ((ineq :: constraints1) @ constraints2) expr
+          (Lin_expr.mul_by Q.minus_one (Lin_expr.const Q.one))
+      and zero = Lin_expr.const Q.zero in
+      let ineq = Lin_ineq.construct expr zero in
+      if Lin_ineq.is_satisfied (ineq Lin_ineq.Ge) point then
+        Cond_lin_expr.construct
+          ((ineq Lin_ineq.Ge :: constraints1) @ constraints2)
+          expr
       else
         Cond_lin_expr.construct
-          ((Lin_ineq.reverse ineq :: constraints1) @ constraints2)
+          ((ineq Lin_ineq.Le :: constraints1) @ constraints2)
           zero
-  | Mu (_, term) -> Algorithm.lfp (eval term) point
-  | Nu (_, term) -> Algorithm.gfp (eval term) point
+  | Mu (_, term) -> Algorithm.lfp (succ dim) (eval (succ dim) term) point
+  | Nu (_, term) -> Algorithm.gfp (succ dim) (eval (succ dim) term) point
 
 (* Print *)
 let term_to_op = function

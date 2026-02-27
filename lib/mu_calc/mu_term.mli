@@ -51,7 +51,7 @@ val nu : int -> t -> t
 
 (** {2 Functions} *)
 
-val eval : t -> Point.t -> Cond_lin_expr.t
+val eval : int -> t -> Point.t -> Cond_lin_expr.t
 
 (** {2 Print} *)
 
