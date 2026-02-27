@@ -1,5 +1,5 @@
 type rel = Lt | Le | Gt | Ge
-type t = { lhs : Lin_expr.t; rhs : Lin_expr.t; rel : rel }
+type t = { lhs : Lin_expr.t; rhs : Lin_expr.t; rel : rel; dim : int }
 
 let neg_rel = function Lt -> Ge | Le -> Gt | Gt -> Le | Ge -> Lt
 
@@ -16,7 +16,7 @@ let construct lhs rhs rel =
       x_s □ -1/q_s (q_{s-1} x_{s-1} + ... q_1 x_1 + q_0) *)
   let rhs = Lin_expr.sub rhs lhs in
   let dim = Lin_expr.dim rhs and leading_coeff = Lin_expr.leading_coeff rhs in
-  if dim = 0 then { lhs = Lin_expr.const Q.zero; rhs; rel }
+  if dim = 0 then { lhs = Lin_expr.const Q.zero; rhs; rel; dim }
   else
     let x =
       Lin_expr.x dim
@@ -26,15 +26,28 @@ let construct lhs rhs rel =
     (* Invariant: leading_coeff <> 0 if dim > 0 *)
     let rhs = Lin_expr.mul_by (Q.neg (Q.inv leading_coeff)) rhs
     and rel = if Q.geq (Q.neg leading_coeff) Q.zero then rel else neg_rel rel in
-    { lhs = x; rhs; rel }
+    { lhs = x; rhs; rel; dim }
 
 (* GETTERS *)
 let lhs ineq = ineq.lhs
 let rhs ineq = ineq.rhs
 let rel ineq = ineq.rel
+let dim ineq = ineq.dim
 
 (* OPERATORS *)
 let negate ineq = construct (lhs ineq) (rhs ineq) (neg_rel (rel ineq))
+
+let substitute ineq i expr =
+  if i < 1 then invalid_arg "Lin_ineq.substitute: variable index must be >= 1"
+  else if i > dim ineq then ineq
+  else if i = dim ineq then
+    (* Invariant: dim rhs < dim ineq if dim ineq >= 1 *)
+    let lhs = Lin_expr.substitute (lhs ineq) i expr in
+    construct lhs (rhs ineq) (rel ineq)
+  else
+    (* Invariant: lhs = x_{dim ineq} *)
+    let rhs = Lin_expr.substitute (rhs ineq) i expr in
+    construct (lhs ineq) rhs (rel ineq)
 
 (* FUNCTIONS *)
 let is_satisfied ineq point =

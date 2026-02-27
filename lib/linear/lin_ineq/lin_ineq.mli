@@ -20,10 +20,20 @@ val rhs : t -> Lin_expr.t
 val rel : t -> rel
 (** [rel ineq] returns the order relation of the inequality. *)
 
+val dim : t -> int
+(** [dim ineq] returns the dimension of [ineq], i.e. the largest variable index
+    occurring in it. *)
+
 (** {2 Operators} *)
 
 val negate : t -> t
 (** [negate ineq] returns the inequality obtained by negating [ineq]. *)
+
+val substitute : t -> int -> Lin_expr.t -> t
+(** [substitute ineq i expr] substitutes the i-th variable of [ineq] with the
+    linear expression [expr].
+
+    Raise [Invalid_argument] if [i < 1]. *)
 
 (** {2 Functions} *)
 
