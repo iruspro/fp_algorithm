@@ -69,12 +69,12 @@ let%test "dim with leading zeros" =
   in
   dim expr = 2
 
-let%test "leading coeff not const" =
+let%test "leading_coeff not const" =
   let q = Q.of_float (Random.float 1024. +. 1.) in
   let expr = from_list [ q; Q.zero; Q.zero; Q.one ] in
-  Q.equal q (leading_coeff expr) && Q.equal Q.zero (leading_coeff expr)
+  Q.equal q (leading_coeff expr)
 
-let%test "leading coeff with leading zeros" =
+let%test "leading_coeff with leading zeros" =
   let q = Q.of_float (Random.float 1024. +. 1.) in
   let expr = from_list [ Q.zero; Q.zero; q; Q.zero; Q.zero; Q.one ] in
   Q.equal q (leading_coeff expr) && not (Q.equal Q.zero (leading_coeff expr))
