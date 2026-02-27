@@ -1,176 +1,201 @@
 open Linear
 
-let lfp (local_alg : Local_alg.t) point (* r *) =
+let bounds rel dim constraints =
+  List.map Lin_ineq.rhs
+    (List.filter
+       (fun ineq -> Lin_ineq.dim ineq = dim && Lin_ineq.rel ineq = rel)
+       constraints)
+
+let strict_lowers = bounds Lin_ineq.Gt
+let non_strict_lowers = bounds Lin_ineq.Ge
+let strict_uppers = bounds Lin_ineq.Lt
+let non_strict_uppers = bounds Lin_ineq.Le
+
+let make_constraints lhs all_rhs rel =
+  let rec aux acc = function
+    | [] -> acc
+    | rhs :: all_rhs -> aux (Lin_ineq.construct lhs rhs rel :: acc) all_rhs
+  in
+  aux [] all_rhs
+
+let rec find_unsatisfied ineqs point =
+  match ineqs with
+  | [] -> None
+  | ineq :: ineqs ->
+      if not (Lin_ineq.is_satisfied ineq point) then Some ineq
+      else find_unsatisfied ineqs point
+
+let find_supremum_term terms point =
+  let rec aux c_term c_min = function
+    | [] -> c_term
+    | term :: terms ->
+        let c_val = Lin_expr.eval term point in
+        if Q.lt c_val c_min then aux (Some term) c_val terms
+        else aux c_term c_min terms
+  in
+  aux None Q.inf terms
+
+let lfp dim local_alg (* t *) point (* r *) =
+  (* Sanity check *)
+  assert (pred dim = Point.dim point);
+
   let new_dim = Point.dim point in
-  let zero = Lin_expr.zero new_dim
-  and ineq_constructor = Lin_ineq.construct
-  and constraints_maker = Lin_ineq.make_constraints in
+  let zero = Lin_expr.const Q.zero in
 
-  let sub_and_reduce expr1 expr2 =
-    Lin_expr.reduce_dim (Lin_expr.sub_last expr1 expr2)
-  in
+  let find_next_approximation c_approx constraints' n strict_lowers
+      non_strict_lowers strict_uppers non_strict_uppers expr =
+    let c_expr (* d *) = Cond_lin_expr.expr c_approx in
 
-  let find_next_approximation c_constraints constraints' n c_approx expr
-      strict_lowers non_strict_lowers strict_uppers non_strict_uppers =
-    let term, strict =
-      match
-        Lin_expr.find_supremum_term (strict_uppers @ non_strict_uppers) point
-      with
+    (* Find supremum term *)
+    let sup_term (* b_j *), from_strict =
+      match find_supremum_term (strict_uppers @ non_strict_uppers) point with
       | Some term -> (term, List.mem term strict_uppers)
-      | None -> failwith "Undefined error"
+      | None -> assert false
     in
-    let c_constraints =
-      if strict then
-        c_constraints @ constraints' @ [ n ]
-        @ constraints_maker c_approx [ term ] Lin_ineq.LessThan
-        @ constraints_maker term non_strict_uppers Lin_ineq.LessEqual
-        @ constraints_maker c_approx strict_lowers Lin_ineq.GreaterThan
-        @ constraints_maker c_approx non_strict_lowers Lin_ineq.GreaterEqual
+
+    (* Define new constraints *)
+    let constraints =
+      if from_strict then
+        (* C' + {N} + {d < b_j} *)
+        (Lin_ineq.construct c_expr sup_term Lin_ineq.Lt :: n :: constraints')
+        (* {b_j <= b_i} *)
+        @ make_constraints sup_term non_strict_uppers Lin_ineq.Le
+        (* {d > a_i} *)
+        @ make_constraints c_expr strict_lowers Lin_ineq.Gt
+        (* {d >= a_i} *)
+        @ make_constraints c_expr non_strict_lowers Lin_ineq.Ge
       else
-        c_constraints @ constraints' @ [ n ]
-        @ constraints_maker c_approx [ term ] Lin_ineq.LessEqual
-        @ constraints_maker term strict_uppers Lin_ineq.LessThan
-        @ constraints_maker term non_strict_uppers Lin_ineq.LessEqual
-        @ constraints_maker c_approx strict_lowers Lin_ineq.GreaterThan
-        @ constraints_maker c_approx non_strict_lowers Lin_ineq.GreaterEqual
+        (* C' + {N} + {d <= d_j} *)
+        (Lin_ineq.construct c_expr sup_term Lin_ineq.Le :: n :: constraints')
+        (* {b_j < b_i} *)
+        @ make_constraints sup_term strict_uppers Lin_ineq.Lt
+        (* {b_j <= b_i} *)
+        @ make_constraints sup_term non_strict_uppers Lin_ineq.Le
+        (* {d > a_i} *)
+        @ make_constraints c_expr strict_lowers Lin_ineq.Gt
+        (* {d >= a_i} *)
+        @ make_constraints c_expr non_strict_lowers Lin_ineq.Ge
     in
-    (c_constraints, sub_and_reduce expr (Lin_expr.extend_dim term Q.zero))
-  in
 
-  let get_new_constraints constraints =
-    List.map
-      (fun ineq ->
-        ineq_constructor
-          (Lin_expr.reduce_dim (Lin_ineq.lhs ineq))
-          (Lin_expr.reduce_dim (Lin_ineq.rhs ineq))
-          (Lin_ineq.rel ineq))
-      (List.filter
-         (fun ineq -> Lin_ineq.n_type ineq = Lin_ineq.WithoutLast)
-         constraints)
-  in
+    (* Define a new linear expression *)
+    let expr = Lin_expr.substitute expr dim sup_term in
 
-  let get_terms constraints ineq_type =
-    List.map Lin_expr.reduce_dim
-      (Lin_ineq.extract_rh_sides
-         (List.filter
-            (fun ineq -> Lin_ineq.n_type ineq = ineq_type)
-            constraints))
-  in
-
-  let reduce_constraints constraints c_approx =
-    List.map
-      (fun ineq ->
-        ineq_constructor
-          (sub_and_reduce (Lin_ineq.lhs ineq)
-             (Lin_expr.extend_dim c_approx Q.zero))
-          (sub_and_reduce (Lin_ineq.rhs ineq)
-             (Lin_expr.extend_dim c_approx Q.zero))
-          (Lin_ineq.rel ineq))
-      constraints
+    Cond_lin_expr.with_expr
+      (Cond_lin_expr.add_constraints c_approx constraints)
+      expr
   in
 
   (* loop *)
-  let rec aux c_constraints c_approx =
-    let cle =
-      local_alg (Point.extend_dim point (Lin_expr.eval c_approx point))
-    in
-    let constraints (* C *) = Cond_lin_expr.constraints cle
-    and expr (* e *) = Cond_lin_expr.expr cle in
+  let rec aux c_approx (* D ⊢ d *) =
+    (* d *)
+    let c_expr = Cond_lin_expr.expr c_approx in
+
+    (* C ⊢ e = t(r, d(r))*)
+    let cle = local_alg (Point.extend_dim point (Lin_expr.eval c_expr point)) in
+    (* C *)
+    let constraints = Cond_lin_expr.constraints cle
+    (* e *)
+    and expr = Cond_lin_expr.expr cle in
 
     (* Arrange inequalities in C *)
-    let constraints' (* C' *) = get_new_constraints constraints
-    and strict_lowers (* {a_i | x_n > a_i} *) =
-      get_terms constraints Lin_ineq.LastGreaterThan
-    and non_strict_lowers (* {a_i | x_n >= a_i} *) =
-      get_terms constraints Lin_ineq.LastGreaterEqual
-    and strict_uppers (* {b_i | x_n < b_i} *) =
-      get_terms constraints Lin_ineq.LastLessThan
-    and non_strict_uppers (* {b_i | x_n <= b_i} *) =
-      get_terms constraints Lin_ineq.LastLessEqual
+    (* C' *)
+    let constraints' =
+      List.filter (fun ineq -> Lin_ineq.dim ineq = new_dim) constraints
     in
+    (* Get lower/upper bounds for x_{n + 1} *)
+    (* {a_i | x_{n + 1} > a_i} *)
+    let strict_lowers = strict_lowers dim constraints
+    (* {a_i | x_{n + 1} >= a_i} *)
+    and non_strict_lowers = non_strict_lowers dim constraints
+    (* {b_i | x_{n + 1} < b_i} *)
+    and strict_uppers = strict_uppers dim constraints
+    (* {b_i | x_{n + 1} <= b_i} *)
+    and non_strict_uppers = non_strict_uppers dim constraints in
 
     (* Check linear expression *)
-    match Lin_expr.as_list expr with
-    | q_n :: qs when Q.( <> ) q_n Q.one (* q_n != 1 case *) -> (
-        (* Define a new linear expression *)
-        let f =
-          Lin_expr.mul_by
-            (Q.div Q.one (Q.sub Q.one q_n))
-            (Lin_expr.from_list qs)
-        in
+    (* q_{n + 1} *)
+    let q = Lin_expr.coeff expr dim in
+    (* q_{n + 1} x_{n + 1} *)
+    let qx = Lin_expr.mul_by q (Lin_expr.x dim) in
+    let reduced = Lin_expr.sub expr qx in
 
-        (* Check constraints at (r, f(r)) *)
-        match
-          Lin_ineq.find_unsatisfied constraints
-            (Point.extend_dim point (Lin_expr.eval f point))
-        with
-        | None (* C(r, f(r)) holds case *) ->
-            (* Update current constraints *)
-            let c_constraints (* E *) =
-              c_constraints (* D *) @ constraints' (* C' *)
-              @ constraints_maker c_approx [ f ]
-                  Lin_ineq.LessEqual (* {d <= f} *)
-              @ constraints_maker c_approx strict_lowers
-                  Lin_ineq.GreaterThan (* {d > a_i} *)
-              @ constraints_maker c_approx non_strict_lowers
-                  Lin_ineq.GreaterEqual (* {d >= a_i} *)
-              @ constraints_maker f strict_uppers
-                  Lin_ineq.LessThan (* {f < b_i} *)
-              @ constraints_maker f non_strict_uppers
-                  Lin_ineq.LessEqual (* {f <= b_i} *)
-            in
-            (* Exit the loop *)
-            Cond_lin_expr.construct c_constraints f
-        | Some ineq (* C(r, f(r)) doesn't hold case *) ->
-            (* Define a new constraint and go to find next optimization *)
-            let lhs =
-              sub_and_reduce (Lin_ineq.lhs ineq) (Lin_expr.extend_dim f Q.zero)
-            and rhs =
-              sub_and_reduce (Lin_ineq.rhs ineq) (Lin_expr.extend_dim f Q.zero)
-            in
-            let n =
-              Lin_ineq.negate (ineq_constructor lhs rhs (Lin_ineq.rel ineq))
-            in
-            let c_constraints, c_approx =
-              find_next_approximation c_constraints constraints' n c_approx expr
-                strict_lowers non_strict_lowers strict_uppers non_strict_uppers
-            in
-            aux c_constraints c_approx)
-    | _ :: qs
-      when Q.equal
-             (Lin_expr.eval (Lin_expr.from_list qs) point)
-             Q.zero (* q_n = 1 and q_n r_n + ... + r_1 q_1 + q_0 = 0 case *) ->
-        (* Update current constraints *)
-        let c_constraints =
-          c_constraints (* D *)
-          @ reduce_constraints constraints c_approx (* C(x, d(x)) *)
-          @ [
-              (* q_0 + q_1 x_1 + ... + q_{n-1} x_{n-1} = 0 *)
-              ineq_constructor (Lin_expr.from_list qs) zero Lin_ineq.LessEqual;
-              ineq_constructor (Lin_expr.from_list qs) zero
-                Lin_ineq.GreaterEqual;
-            ]
+    if not (Q.equal q Q.one) then
+      (* Define a new linear expression *)
+      (* 1 / (1 - q_{n + 1}) *)
+      let c = Q.inv (Q.sub Q.one q) in
+      let f = Lin_expr.mul_by c reduced in
+
+      (* Check if C(r, f(r)) holds *)
+      let fail =
+        find_unsatisfied constraints
+          (Point.extend_dim point (Lin_expr.eval f point))
+      in
+      match fail with
+      | None (* C(r, f(r)) holds *) ->
+          (* Define new constraints *)
+          (* d <= f *)
+          let inv_constraint = Lin_ineq.construct c_expr f Lin_ineq.Le
+          and
+              (* {d > a_i} *)
+              strict_lowers =
+            make_constraints c_expr strict_lowers Lin_ineq.Gt
+          and
+              (* {d >= a_i} *)
+              non_strict_lowers =
+            make_constraints c_expr non_strict_lowers Lin_ineq.Ge
+          and
+              (* {f < b_i} *)
+              strict_uppers =
+            make_constraints f strict_uppers Lin_ineq.Lt
+          and
+              (* {f <= b_i} *)
+              non_strict_uppers =
+            make_constraints f non_strict_uppers Lin_ineq.Le
+          in
+
+          let cle =
+            Cond_lin_expr.add_constraints cle
+              ((inv_constraint :: constraints')
+              @ strict_lowers @ non_strict_lowers @ strict_uppers
+              @ non_strict_uppers)
+          in
+          (* Exit the loop with E ⊢ f *)
+          Cond_lin_expr.with_expr cle f
+      | Some ineq (* C(r, f(r)) doesn't holds *) ->
+          (* Define new constraint N(x_1, ..., x_n) *)
+          let n = Lin_ineq.negate (Lin_ineq.substitute ineq dim f) in
+          aux
+            (find_next_approximation c_approx constraints' n strict_lowers
+               non_strict_lowers strict_uppers non_strict_uppers expr)
+    else
+      (* q_{n + 1} = 1 *)
+      let v = Lin_expr.eval reduced point in
+
+      if Q.equal v Q.zero then
+        (* q_n r_n + ... + q_1 r_1 + q_0 = 0 *)
+        (* Define new constraints *)
+        let constraints =
+          List.map (fun ineq -> Lin_ineq.substitute ineq dim c_expr) constraints
+        and eq_zero =
+          [
+            Lin_ineq.construct reduced zero Lin_ineq.Le;
+            Lin_ineq.construct reduced zero Lin_ineq.Ge;
+          ]
         in
-        (* Exit the loop *)
-        Cond_lin_expr.construct c_constraints c_approx
-    | _ :: qs (* q_n = 1 and q_n r_n + ... + r_1 q_1 + q_0 != 0 case *) ->
-        (* Define a new constraint and go to find next optimization *)
-        let ineq1 =
-          ineq_constructor (Lin_expr.from_list qs) zero Lin_ineq.LessThan
-        and ineq2 =
-          ineq_constructor (Lin_expr.from_list qs) zero Lin_ineq.GreaterThan
-        in
-        let n = if Lin_ineq.is_satisfied ineq1 point then ineq1 else ineq2 in
-        let c_constraints, c_approx =
-          find_next_approximation c_constraints constraints' n c_approx expr
-            strict_lowers non_strict_lowers strict_uppers non_strict_uppers
-        in
-        aux c_constraints c_approx
-    | [] -> failwith "A linear expression must have at least one coefficient"
+        (* Exit the loop with E ⊢ d *)
+        Cond_lin_expr.add_constraints c_approx (constraints @ eq_zero)
+      else
+        (* q_n r_n + ... + q_1 r_1 + q_0 <> 0 *)
+        (* Define new constraint N(x_1, ..., x_n) *)
+        let ineq = Lin_ineq.construct reduced zero in
+        let n = if Q.lt v Q.zero then ineq Lin_ineq.Lt else ineq Lin_ineq.Gt in
+        aux
+          (find_next_approximation c_approx constraints' n strict_lowers
+             non_strict_lowers strict_uppers non_strict_uppers expr)
   in
-  aux [] zero
+  aux (Cond_lin_expr.construct [] zero)
 
-let gfp (local_alg : Local_alg.t) point =
-  let cle = lfp (Local_alg.dual local_alg) point in
-  let expr = Lin_expr.complement (Cond_lin_expr.expr cle) in
+let gfp dim (local_alg : Local_alg.t) point =
+  let cle = lfp dim (Utils.dual local_alg) point in
+  let expr = Utils.complement (Cond_lin_expr.expr cle) in
   Cond_lin_expr.with_expr cle expr
