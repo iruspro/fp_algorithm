@@ -153,14 +153,14 @@ let lfp dim local_alg (* t *) point (* r *) =
             make_constraints f non_strict_uppers Lin_ineq.Le
           in
 
-          let cle =
-            Cond_lin_expr.add_constraints cle
+          let c_approx =
+            Cond_lin_expr.add_constraints c_approx
               ((inv_constraint :: constraints')
               @ strict_lowers @ non_strict_lowers @ strict_uppers
               @ non_strict_uppers)
           in
           (* Exit the loop with E ⊢ f *)
-          Cond_lin_expr.with_expr cle f
+          Cond_lin_expr.with_expr c_approx f
       | Some ineq (* C(r, f(r)) doesn't holds *) ->
           (* Define new constraint N(x_1, ..., x_n) *)
           let n = Lin_ineq.negate (Lin_ineq.substitute ineq dim f) in
