@@ -1,6 +1,6 @@
 type t
-(** Linear expressions of the form q_n x_n + ... + q_1 x_1 + q_0, where
-    [q_n <> 0] if [n > 0] *)
+(** Linear expressions of the form [q_n x_n + ... + q_1 x_1 + q_0], where
+    [q_n <> 0] if [n > 0]. *)
 
 (** {2 Constructors} *)
 
@@ -61,8 +61,8 @@ val sub : t -> t -> t
     coefficients of [expr2] from [expr1]. *)
 
 val substitute : t -> int -> t -> t
-(** [substitute` expr1 i expr2] substitutes the i-th variable of [expr1] with
-    the linear expression [expr2].
+(** [substitute expr1 i expr2] substitutes the i-th variable of [expr1] with the
+    linear expression [expr2].
 
     Raise [Invalid_argument] if [i < 1]. *)
 
@@ -82,4 +82,4 @@ val to_string : t -> string
     [expr]. *)
 
 val print : t -> unit
-(** [print expr] prints the linear expression [expr] to the standard output. *)
+(** [print expr] prints the linear expression [expr] to standard output. *)

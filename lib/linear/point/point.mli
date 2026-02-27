@@ -33,4 +33,4 @@ val to_string : t -> string
 (** [to_string point] returns a string representation of the point [point]. *)
 
 val print : t -> unit
-(** [print point] prints the point [point] to the standard output. *)
+(** [print point] prints the point [point] to standard output. *)
