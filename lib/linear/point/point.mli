@@ -7,6 +7,10 @@ val from_list : Q.t list -> t
 (** [from_list coords] returns the point in Q^n whose coordinates are given by
     [coords], interpreted as [[r_1; ...; r_n]]. *)
 
+val from_rev_list : Q.t list -> t
+(** [from_rev_list coords] returns the point in Q^n whose coordinates are given
+    by [coords], interpreted as [[r_n; ...; r_1]]. *)
+
 (** {2 Getters} *)
 
 val as_list : t -> Q.t list
