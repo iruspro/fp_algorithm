@@ -1,0 +1,13 @@
+{0 fp_algorithm index}
+{1 Library fp_algorithm.common}
+The entry point of this library is the module:
+{!module-Common}.
+{1 Library fp_algorithm.core}
+The entry point of this library is the module:
+{!module-Core}.
+{1 Library fp_algorithm.linear}
+The entry point of this library is the module:
+{!module-Linear}.
+{1 Library fp_algorithm.mu_calc}
+The entry point of this library is the module:
+{!module-Mu_calc}.

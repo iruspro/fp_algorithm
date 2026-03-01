@@ -1,30 +1,32 @@
+(** {1 Linear expression} *)
+
 type t
-(** Linear expressions of the form [q_n x_n + ... + q_1 x_1 + q_0], where
-    [q_n <> 0] if [n > 0]. *)
+(** Linear expressions of the form
+    {math q_n x_n + ... + q_1 x_1 + q_0,}
+    where {m q_n \neq 0} if {m n > 0}. *)
 
 (** {2 Constructors} *)
 
 val from_list : Q.t list -> t
 (** [from_list coeffs] creates a linear expression from a list of coefficients
-    [q_n; ...; q_1; q_0] representing [q_m x_m + ... + q_1 x_1 + q_0], where
-    [m <= n] and [q_m <> 0] if [m > 0].
+    [[q_n; ...; q_1; q_0]] representing {!t}.
 
     Raise [Invalid_argument] if the list is empty. *)
 
 val const : Q.t -> t
-(** [const q] return the expressions representing the constant [q]. *)
+(** [const q] return the expression representing the constant [q]. *)
 
 val x : int -> t
-(** [x i] returns the i-th variable x_i in a linear expression.
+(** [x i] returns the expression representing the i-th variable {m x_i}.
 
-    Raise [Invalid_argument] if [i < 1]. *)
+    Raise [Invalid_argument] if {m i < 1}. *)
 
 (** {2 Getters} *)
 
 val dim : t -> int
-(** [dim expr] returns the largest index [n] such that [q_n <> 0] in
-    [q_n x_n + ... + q_1 x_1 + q_0], or 0 if the constant term [q_0] is the only
-    (possibly zero) coefficient. *)
+(** [dim expr] returns the largest index {m n} such that {m q_n \neq 0} in {!t},
+    or {m 0} if the constant term {m q_0} is the only (possibly zero)
+    coefficient. *)
 
 val leading_coeff : t -> Q.t
 (** [leading_coeff expr] returns the coefficient of the highest-indexed variable
@@ -34,15 +36,15 @@ val leading_coeff : t -> Q.t
 
 val coeff : t -> int -> Q.t
 (** [coeff expr i] returns the coefficient of the i-th variable in [expr], or
-    the constant term if [i = 0]. The value may be zero.
+    the constant term if {m i = 0}. The value may be zero.
 
-    Raise [Invalid_argument] if [i < 0]. *)
+    Raise [Invalid_argument] if {m i < 0}. *)
 
 (** {2 Operators} *)
 
 val equal : t -> t -> bool
-(** [equal expr1 expr2] returns [true] if [expr1 = expr2] and [false] otherwise.
-*)
+(** [equal expr1 expr2] returns [true] if {m expr1 = expr2} and [false]
+    otherwise. *)
 
 val mul_by : Q.t -> t -> t
 (** [mul_by q expr] returns the linear expression obtained by multiplying every
@@ -60,7 +62,7 @@ val substitute : t -> int -> t -> t
 (** [substitute expr1 i expr2] substitutes the i-th variable of [expr1] with the
     linear expression [expr2].
 
-    Raise [Invalid_argument] if [i < 1]. *)
+    Raise [Invalid_argument] if {m i < 1}. *)
 
 (** {2 Functions} *)
 
