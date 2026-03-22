@@ -2,26 +2,27 @@ open Cle_vec
 
 let ineq lhs rhs rel = Lin_ineq.construct lhs rhs rel
 let lin coeffs = Lin_expr.from_list coeffs
+let vec exprs = Lin_expr_vec.from_array exprs
 
 (* CONSTRUCTORS *)
 let%test "construct and getters roundtrip" =
   let c1 = ineq (Lin_expr.x 1) (Lin_expr.const Q.zero) Lt in
   let e1 = lin [ Q.one; Q.of_int 2 ] and e2 = lin [ Q.of_int 3 ] in
-  let cle = construct [ c1 ] [| e1; e2 |] in
+  let cle = construct [ c1 ] (vec [| e1; e2 |]) in
   constraints cle = [ c1 ]
-  && Lin_expr.equal (expr cle 0) e1
-  && Lin_expr.equal (expr cle 1) e2
-  && Array.length (exprs cle) = 2
+  && Lin_expr.equal (expr cle 1) e1
+  && Lin_expr.equal (expr cle 2) e2
+  && codim cle = 2
 
 let%test "construct empty constraints" =
-  let cle = construct [] [| lin [ Q.one ] |] in
-  constraints cle = [] && Array.length (exprs cle) = 1
+  let cle = construct [] (vec [| lin [ Q.one ] |]) in
+  constraints cle = [] && codim cle = 1
 
 (* FUNCTIONS *)
 let%test "add_constraint" =
   let c1 = ineq (Lin_expr.x 1) (Lin_expr.const Q.zero) Lt in
   let c2 = ineq (Lin_expr.x 1) (Lin_expr.const Q.one) Le in
-  let cle = construct [ c1 ] [| lin [ Q.one ] |] in
+  let cle = construct [ c1 ] (vec [| lin [ Q.one ] |]) in
   let cle' = add_constraint cle c2 in
   List.length (constraints cle') = 2 && List.length (constraints cle) = 1
 
@@ -29,23 +30,50 @@ let%test "add_constraints" =
   let c1 = ineq (Lin_expr.x 1) (Lin_expr.const Q.zero) Lt in
   let c2 = ineq (Lin_expr.x 1) (Lin_expr.const Q.one) Le in
   let c3 = ineq (Lin_expr.x 2) (Lin_expr.const Q.zero) Ge in
-  let cle = construct [ c1 ] [| lin [ Q.one ] |] in
+  let cle = construct [ c1 ] (vec [| lin [ Q.one ] |]) in
   let cle' = add_constraints cle [ c2; c3 ] in
   List.length (constraints cle') = 3
 
 let%test "with_expr replaces k-th expression" =
   let e1 = lin [ Q.one ] and e2 = lin [ Q.of_int 2 ] in
   let e3 = lin [ Q.of_int 99 ] in
-  let cle = construct [] [| e1; e2 |] in
-  let cle' = with_expr cle e3 1 in
-  Lin_expr.equal (expr cle' 0) e1 && Lin_expr.equal (expr cle' 1) e3
+  let cle = construct [] (vec [| e1; e2 |]) in
+  let cle' = with_expr cle e3 2 in
+  Lin_expr.equal (expr cle' 1) e1 && Lin_expr.equal (expr cle' 2) e3
 
 let%test "with_expr does not mutate original" =
   let e1 = lin [ Q.one ] and e2 = lin [ Q.of_int 2 ] in
   let e3 = lin [ Q.of_int 99 ] in
-  let cle = construct [] [| e1; e2 |] in
-  let _ = with_expr cle e3 1 in
-  Lin_expr.equal (expr cle 1) e2
+  let cle = construct [] (vec [| e1; e2 |]) in
+  let _ = with_expr cle e3 2 in
+  Lin_expr.equal (expr cle 2) e2
+
+let%test "codim" =
+  let cle =
+    construct [] (vec [| lin [ Q.one ]; lin [ Q.of_int 2 ]; Lin_expr.x 1 |])
+  in
+  codim cle = 3
+
+let%test "expr out of bounds" =
+  let cle = construct [] (vec [| lin [ Q.one ] |]) in
+  try
+    let _ = expr cle 2 in
+    false
+  with Invalid_argument _ -> true
+
+let%test "expr zero index" =
+  let cle = construct [] (vec [| lin [ Q.one ] |]) in
+  try
+    let _ = expr cle 0 in
+    false
+  with Invalid_argument _ -> true
+
+let%test "with_expr out of bounds" =
+  let cle = construct [] (vec [| lin [ Q.one ] |]) in
+  try
+    let _ = with_expr cle (Lin_expr.const Q.zero) 2 in
+    false
+  with Invalid_argument _ -> true
 
 let%test "with_exprs replaces all" =
   let c1 = ineq (Lin_expr.x 1) (Lin_expr.const Q.zero) Lt in
@@ -113,14 +141,16 @@ let%test "substitute_from preserves constraints" =
 
 (* PRINT *)
 let%test "to_string empty constraints" =
-  let cle = construct [] [| Lin_expr.const Q.one; Lin_expr.const Q.zero |] in
+  let cle =
+    construct [] (vec [| Lin_expr.const Q.one; Lin_expr.const Q.zero |])
+  in
   to_string cle = "{} ⊢ (1, 0)"
 
 let%test "to_string single expr" =
-  let cle = construct [] [| Lin_expr.x 1 |] in
+  let cle = construct [] (vec [| Lin_expr.x 1 |]) in
   to_string cle = "{} ⊢ (x₁)"
 
 let%test "to_string with constraint" =
   let c = ineq (Lin_expr.x 1) (Lin_expr.const Q.zero) Lt in
-  let cle = construct [ c ] [| Lin_expr.const (Q.of_int 5) |] in
+  let cle = construct [ c ] (vec [| Lin_expr.const (Q.of_int 5) |]) in
   to_string cle = "{\nx₁ < 0\n} ⊢ (5)"
