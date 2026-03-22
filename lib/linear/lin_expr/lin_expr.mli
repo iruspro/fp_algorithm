@@ -14,7 +14,7 @@ val from_list : Q.t list -> t
     Raise [Invalid_argument] if the list is empty. *)
 
 val const : Q.t -> t
-(** [const q] return the expression representing the constant [q]. *)
+(** [const q] returns the expression representing the constant [q]. *)
 
 val x : int -> t
 (** [x i] returns the expression representing the i-th variable {m x_i}.
@@ -76,8 +76,11 @@ val eval : t -> Point.t -> Q.t
 (** {2 Print} *)
 
 val to_string : t -> string
-(** [to_string expr] returns a string representation of the linear expression
-    [expr]. *)
+(** [to_string expr] returns a string representation of [expr] in the form
+    [q_n x_n + ... + q_1 x_1 + q_0], with zero terms omitted and subscript
+    indices, e.g. [to_string (from_list [Q.of_int 2; Q.minus_one; Q.of_int 3])]
+    returns ["2x₂ - x₁ + 3"]. A constant expression returns the constant value
+    as a string. *)
 
 val print : t -> unit
-(** [print expr] prints the linear expression [expr] to standard output. *)
+(** [print expr] is [print_string (to_string expr)]. *)

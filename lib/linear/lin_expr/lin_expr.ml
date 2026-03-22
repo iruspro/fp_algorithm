@@ -88,8 +88,7 @@ let eval expr point =
     | [], [] | [], _ -> acc
     | _, [] ->
         invalid_arg
-          "Lin_expr.eval: dimension mismatch (expression and point must have \
-           the same dimension)"
+          "Lin_expr.eval: dimension of expression exceeds dimension of point"
     | q :: qs, r :: rs -> aux (Q.add acc (Q.mul q r)) (qs, rs)
   in
   match as_rev_list expr with
@@ -108,24 +107,25 @@ let to_string expr =
   let dim = dim expr in
   if dim = 0 then Q.to_string (leading_coeff expr)
   else
-    let rec aux acc = function
+    let rec aux acc i = function
       | [] -> acc
-      | q :: qs when Q.equal q Q.zero -> aux acc qs (* Skip zeros *)
+      | q :: qs when Q.equal q Q.zero -> aux acc (pred i) qs (* Skip zeros *)
       | [ q_0 ] ->
           (* Add non-zero constant to non-constant linear expression *)
-          aux (acc ^ " " ^ q_to_sign q_0 ^ " " ^ Q.to_string (Q.abs q_0)) []
-      | q :: qs when List.length qs = dim ->
+          aux (acc ^ " " ^ q_to_sign q_0 ^ " " ^ Q.to_string (Q.abs q_0)) 0 []
+      | q :: qs when i = dim ->
           (* Add first element of non-constant linear expression *)
           let sign = if Q.lt q Q.zero then "-" else "" in
-          aux (acc ^ sign ^ q_to_coeff q ^ "x" ^ Pprint.int_to_subscript dim) qs
+          aux
+            (acc ^ sign ^ q_to_coeff q ^ "x" ^ Pprint.int_to_subscript i)
+            (pred i) qs
       | q :: qs ->
           (* Add i-th element of linear expression *)
-          let i = List.length qs in
           aux
             (acc ^ " " ^ q_to_sign q ^ " " ^ q_to_coeff q ^ "x"
            ^ Pprint.int_to_subscript i)
-            qs
+            (pred i) qs
     in
-    aux "" (as_list expr)
+    aux "" dim (as_list expr)
 
 let print expr = print_string (to_string expr)
