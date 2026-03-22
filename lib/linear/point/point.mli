@@ -34,7 +34,9 @@ val extend_dim : t -> Q.t -> t
 (** {2 Print} *)
 
 val to_string : t -> string
-(** [to_string point] returns a string representation of the point [point]. *)
+(** [to_string point] returns a string representation of [point] in the form
+    [(r_1, ..., r_n)], e.g. [to_string (from_list [Q.one; Q.of_int 2])] returns
+    ["(1, 2)"]. The empty point is represented as [()]. *)
 
 val print : t -> unit
-(** [print point] prints the point [point] to standard output. *)
+(** [print point] is [print_string (to_string point)]. *)
