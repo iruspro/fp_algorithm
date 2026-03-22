@@ -7,7 +7,11 @@ type rel = Lt | Le | Gt | Ge  (** Order relation. *)
 (** {2 Constructors} *)
 
 val construct : Lin_expr.t -> Lin_expr.t -> rel -> t
-(** [construct lhs rhs rel] constructs a linear inequality in normal form. *)
+(** [construct lhs rhs rel] constructs and normalizes the inequality
+    [lhs rel rhs] into the form [x_n □ rhs'] where [n] is the largest variable
+    index in [rhs - lhs]. If the leading coefficient of [rhs - lhs] is negative,
+    the relation is reversed. For constant inequalities ([dim = 0]), returns
+    [0 □ (rhs - lhs)]. *)
 
 (** {2 Getters} *)
 
@@ -27,7 +31,8 @@ val dim : t -> int
 (** {2 Operators} *)
 
 val negate : t -> t
-(** [negate ineq] returns the inequality obtained by negating [ineq]. *)
+(** [negate ineq] returns the logical negation of [ineq], i.e. [<] becomes [≥],
+    [≤] becomes [>], etc. *)
 
 val substitute : t -> int -> Lin_expr.t -> t
 (** [substitute ineq i expr] substitutes the i-th variable of [ineq] with the
@@ -44,7 +49,8 @@ val is_satisfied : t -> Point.t -> bool
 (** {2 Print} *)
 
 val to_string : t -> string
-(** [to_string ineq] returns a string representation of the inequality. *)
+(** [to_string ineq] returns a string representation of [ineq] in the form
+    [lhs □ rhs], e.g. ["x₂ ≤ 3x₁ + 1"]. *)
 
 val print : t -> unit
-(** [print ineq] prints the inequality to standard output. *)
+(** [print ineq] is [print_string (to_string ineq)]. *)
