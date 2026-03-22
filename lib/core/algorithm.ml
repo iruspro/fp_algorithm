@@ -195,7 +195,7 @@ let lfp dim local_alg (* t *) point (* r *) =
   in
   aux (Cond_lin_expr.construct [] zero)
 
-let gfp dim (local_alg : Local_alg.t) point =
+let gfp dim local_alg point =
   let cle = lfp dim (Utils.dual local_alg) point in
   let expr = Utils.complement (Cond_lin_expr.expr cle) in
   Cond_lin_expr.with_expr cle expr
