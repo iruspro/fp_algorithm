@@ -56,7 +56,7 @@ val simplify : t -> t
     identities: [0 ⊕ t = t], [t ⊕ 0 = t], [1 ⊙ t = t], [t ⊙ 1 = t], [1 ⊔ t = 1],
     [0 ⊓ t = 0], [0 · t = 0], [1 · t = t], etc. *)
 
-val eval : int -> t -> Point.t -> Cond_lin_expr.t
+val eval : int -> t -> Point.t -> Cle.t
 (** [eval dim term point] evaluates the μ-term [term] at [point] in dimension
     [dim], returning a conditioned linear expression.
 

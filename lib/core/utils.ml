@@ -11,14 +11,14 @@ let flip_last local_alg point =
   let flip_ineq ineq = Lin_ineq.substitute ineq n sub in
 
   let cle = local_alg point in
-  let constraints = List.map flip_ineq (Cond_lin_expr.constraints cle)
-  and expr = flip_expr (Cond_lin_expr.expr cle) in
-  Cond_lin_expr.construct constraints expr
+  let constraints = List.map flip_ineq (Cle.constraints cle)
+  and expr = flip_expr (Cle.expr cle) in
+  Cle.construct constraints expr
 
 (** f -> 1 - f *)
 let flip local_alg (point : Point.t) =
   let cle = local_alg point in
-  Cond_lin_expr.with_expr cle (complement (Cond_lin_expr.expr cle))
+  Cle.with_expr cle (complement (Cle.expr cle))
 
 let dual local_alg point =
   let flip_point point =

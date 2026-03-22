@@ -23,23 +23,21 @@ let local_alg_1 point =
     ]
   in
   if List.for_all (fun c -> Lin_ineq.is_satisfied c point) constraints1 then
-    Cond_lin_expr.construct constraints1 expr1
+    Cle.construct constraints1 expr1
   else if List.for_all (fun c -> Lin_ineq.is_satisfied c point) constraints2
-  then Cond_lin_expr.construct constraints2 expr2
+  then Cle.construct constraints2 expr2
   else if List.for_all (fun c -> Lin_ineq.is_satisfied c point) constraints3
-  then Cond_lin_expr.construct constraints3 expr3
+  then Cle.construct constraints3 expr3
   else invalid_arg "local_alg_1: point out of domain"
 
 let%test "lfp 1-dim" =
   let f' = lfp 1 local_alg_1 in
   let cle = f' (Point.from_list []) in
-  let expr = Cond_lin_expr.expr cle
-  and result = Lin_expr.from_list [ Q.( // ) 1 4 ] in
+  let expr = Cle.expr cle and result = Lin_expr.from_list [ Q.( // ) 1 4 ] in
   Lin_expr.dim expr = 0 && Lin_expr.equal expr result
 
 let%test "gfp 1-dim" =
   let f' = gfp 1 local_alg_1 in
   let cle = f' (Point.from_list []) in
-  let expr = Cond_lin_expr.expr cle
-  and result = Lin_expr.from_list [ Q.( // ) 5 8 ] in
+  let expr = Cle.expr cle and result = Lin_expr.from_list [ Q.( // ) 5 8 ] in
   Lin_expr.dim expr = 0 && Lin_expr.equal expr result

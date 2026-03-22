@@ -1,1 +1,1 @@
-type t = Point.t -> Cond_lin_expr.t
+type t = Point.t -> Cle.t

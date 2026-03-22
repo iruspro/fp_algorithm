@@ -44,7 +44,7 @@ let lfp dim local_alg (* t *) point (* r *) =
 
   let find_next_approximation c_approx constraints' n strict_lowers
       non_strict_lowers strict_uppers non_strict_uppers expr =
-    let c_expr (* d *) = Cond_lin_expr.expr c_approx in
+    let c_expr (* d *) = Cle.expr c_approx in
 
     (* Find supremum term *)
     let sup_term (* b_j *), from_strict =
@@ -80,22 +80,20 @@ let lfp dim local_alg (* t *) point (* r *) =
     (* Define a new linear expression *)
     let expr = Lin_expr.substitute expr dim sup_term in
 
-    Cond_lin_expr.with_expr
-      (Cond_lin_expr.add_constraints c_approx constraints)
-      expr
+    Cle.with_expr (Cle.add_constraints c_approx constraints) expr
   in
 
   (* loop *)
   let rec aux c_approx (* D ⊢ d *) =
     (* d *)
-    let c_expr = Cond_lin_expr.expr c_approx in
+    let c_expr = Cle.expr c_approx in
 
     (* C ⊢ e = t(r, d(r))*)
     let cle = local_alg (Point.extend_dim point (Lin_expr.eval c_expr point)) in
     (* C *)
-    let constraints = Cond_lin_expr.constraints cle
+    let constraints = Cle.constraints cle
     (* e *)
-    and expr = Cond_lin_expr.expr cle in
+    and expr = Cle.expr cle in
 
     (* Arrange inequalities in C *)
     (* C' *)
@@ -154,13 +152,13 @@ let lfp dim local_alg (* t *) point (* r *) =
           in
 
           let c_approx =
-            Cond_lin_expr.add_constraints c_approx
+            Cle.add_constraints c_approx
               ((inv_constraint :: constraints')
               @ strict_lowers @ non_strict_lowers @ strict_uppers
               @ non_strict_uppers)
           in
           (* Exit the loop with E ⊢ f *)
-          Cond_lin_expr.with_expr c_approx f
+          Cle.with_expr c_approx f
       | Some ineq (* C(r, f(r)) doesn't holds *) ->
           (* Define new constraint N(x_1, ..., x_n) *)
           let n = Lin_ineq.negate (Lin_ineq.substitute ineq dim f) in
@@ -183,7 +181,7 @@ let lfp dim local_alg (* t *) point (* r *) =
           ]
         in
         (* Exit the loop with E ⊢ d *)
-        Cond_lin_expr.add_constraints c_approx (constraints @ eq_zero)
+        Cle.add_constraints c_approx (constraints @ eq_zero)
       else
         (* q_n r_n + ... + q_1 r_1 + q_0 <> 0 *)
         (* Define new constraint N(x_1, ..., x_n) *)
@@ -193,12 +191,12 @@ let lfp dim local_alg (* t *) point (* r *) =
           (find_next_approximation c_approx constraints' n strict_lowers
              non_strict_lowers strict_uppers non_strict_uppers expr)
   in
-  aux (Cond_lin_expr.construct [] zero)
+  aux (Cle.construct [] zero)
 
 let gfp dim local_alg point =
   if pred dim <> Point.dim point then
     invalid_arg "Algorithm.gfp: dim must equal Point.dim point + 1";
 
   let cle = lfp dim (Utils.dual local_alg) point in
-  let expr = Utils.complement (Cond_lin_expr.expr cle) in
-  Cond_lin_expr.with_expr cle expr
+  let expr = Utils.complement (Cle.expr cle) in
+  Cle.with_expr cle expr

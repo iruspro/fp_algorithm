@@ -121,8 +121,7 @@ let mu_term =
 let%test "eval" =
   let point = Point.from_list [ Q.one ] in
   let cle = eval 1 mu_term point in
-  let constraints = Cond_lin_expr.constraints cle
-  and expr = Cond_lin_expr.expr cle in
+  let constraints = Cle.constraints cle and expr = Cle.expr cle in
   let fp = Lin_expr.eval expr point in
   let constraints_ok =
     List.for_all (fun ineq -> Lin_ineq.is_satisfied ineq point) constraints
@@ -142,8 +141,7 @@ let nu_term =
 let%test "eval nu 2-dim" =
   let point = Point.from_list [ Q.one; Q.( // ) 1 2 ] in
   let cle = eval 2 nu_term point in
-  let constraints = Cond_lin_expr.constraints cle
-  and expr = Cond_lin_expr.expr cle in
+  let constraints = Cle.constraints cle and expr = Cle.expr cle in
   let fp = Lin_expr.eval expr point in
   let constraints_ok =
     List.for_all (fun ineq -> Lin_ineq.is_satisfied ineq point) constraints

@@ -1,4 +1,4 @@
-open Cond_lin_expr
+open Cle
 
 let ineq lhs rhs rel = Lin_ineq.construct lhs rhs rel
 let lin coeffs = Lin_expr.from_list coeffs
