@@ -129,6 +129,30 @@ let%test "eval" =
   in
   Q.equal fp (Q.( // ) 3 4) && constraints_ok
 
+(* νx₃.((1/2 x₁ ⊕ 1/4) ⊔ (x₂ ⊓ 1/2 x₃)) *)
+let nu_term =
+  simplify
+    (nu 3
+       (weak_disj
+          (strong_disj
+             (scalar_mult (Q.( // ) 1 2) (var 1))
+             (const (Q.( // ) 1 4)))
+          (weak_conj (var 2) (scalar_mult (Q.( // ) 1 2) (var 3)))))
+
+let%test "eval nu 2-dim" =
+  let point = Point.from_list [ Q.one; Q.( // ) 1 2 ] in
+  let cle = eval 2 nu_term point in
+  let constraints = Cond_lin_expr.constraints cle
+  and expr = Cond_lin_expr.expr cle in
+  let fp = Lin_expr.eval expr point in
+  let constraints_ok =
+    List.for_all (fun ineq -> Lin_ineq.is_satisfied ineq point) constraints
+  in
+  Q.equal fp (Q.( // ) 3 4) && constraints_ok
+
+let%test "to_string nu_term" =
+  to_string nu_term = "νx₃.(1/2 x₁ ⊕ 1/4) ⊔ (x₂ ⊓ 1/2 x₃)"
+
 let%test "eval dim mismatch" =
   let point = Point.from_list [ Q.one; Q.zero ] in
   try
