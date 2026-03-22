@@ -196,6 +196,9 @@ let lfp dim local_alg (* t *) point (* r *) =
   aux (Cond_lin_expr.construct [] zero)
 
 let gfp dim local_alg point =
+  if pred dim <> Point.dim point then
+    invalid_arg "Algorithm.gfp: dim must equal Point.dim point + 1";
+
   let cle = lfp dim (Utils.dual local_alg) point in
   let expr = Utils.complement (Cond_lin_expr.expr cle) in
   Cond_lin_expr.with_expr cle expr
