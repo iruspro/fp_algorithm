@@ -14,19 +14,14 @@ let with_expr cle expr = construct (constraints cle) expr
 
 (* PRINT *)
 let to_string cle =
-  let ineqs = constraints cle and expr = expr cle in
-
-  let count = List.length ineqs in
-  let constraints =
-    "{\n"
-    ^ List.fold_left ( ^ ) ""
-        (List.mapi
-           (fun i ineq ->
-             if i <> count - 1 then Lin_ineq.to_string ineq ^ "\n"
-             else Lin_ineq.to_string ineq)
-           ineqs)
-    ^ "\n}"
+  let ineqs = constraints cle and e = expr cle in
+  let conds =
+    match ineqs with
+    | [] -> "{}"
+    | _ ->
+        let strs = List.map Lin_ineq.to_string ineqs in
+        "{\n" ^ String.concat "\n" strs ^ "\n}"
   in
-  constraints ^ " ⊢ " ^ Lin_expr.to_string expr
+  conds ^ " ⊢ " ^ Lin_expr.to_string e
 
 let print cle = print_string (to_string cle)

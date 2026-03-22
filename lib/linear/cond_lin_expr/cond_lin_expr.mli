@@ -37,9 +37,9 @@ val with_expr : t -> Lin_expr.t -> t
 (** {2 Print} *)
 
 val to_string : t -> string
-(** [to_string cle] returns a string representation of the conditioned linear
-    expression [cle]. *)
+(** [to_string cle] returns a string representation of [cle] in the form
+    [{{\n...\n\} ⊢ e], where each constraint appears on its own line. An empty
+    constraint set is represented as [{\}]. *)
 
 val print : t -> unit
-(** [print cle] prints the conditioned linear expression [cle] to standard
-    output. *)
+(** [print cle] is [print_string (to_string cle)]. *)
