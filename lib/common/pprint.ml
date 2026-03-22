@@ -1,4 +1,6 @@
 let int_to_subscript n =
+  if n < 0 then
+    invalid_arg "Pprint.int_to_subscript: argument must be non-negative";
   let subs = [| "₀"; "₁"; "₂"; "₃"; "₄"; "₅"; "₆"; "₇"; "₈"; "₉" |] in
   let rec aux acc = function
     | 0 -> acc
