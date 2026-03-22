@@ -24,7 +24,7 @@ let dual local_alg point =
   let flip_point point =
     match Point.as_reversed_list point with
     | [] -> point
-    | r_n :: rs -> Point.from_list (Q.sub Q.one r_n :: rs)
+    | r_n :: rs -> Point.from_rev_list (Q.sub Q.one r_n :: rs)
   in
   let point = flip_point point in
   flip (flip_last local_alg) point
