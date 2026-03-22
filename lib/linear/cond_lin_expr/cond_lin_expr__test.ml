@@ -52,6 +52,22 @@ let%test "with_expr replaces expression" =
   (* original unchanged *)
   && Lin_expr.equal (expr cle) e1
 
+let%test "mul_by scales expression" =
+  let c1 = ineq (Lin_expr.x 1) (Lin_expr.const Q.zero) Lt in
+  let e = lin [ Q.of_int 2; Q.of_int 4 ] in
+  let cle = construct [ c1 ] e in
+  let cle' = mul_by (Q.( // ) 1 2) cle in
+  Lin_expr.equal (expr cle') (lin [ Q.one; Q.of_int 2 ])
+  && constraints cle' = constraints cle
+
+let%test "mul_by preserves constraints" =
+  let c1 = ineq (Lin_expr.x 1) (Lin_expr.const Q.zero) Lt in
+  let c2 = ineq (Lin_expr.x 1) (Lin_expr.const Q.one) Le in
+  let cle = construct [ c1; c2 ] (lin [ Q.one; Q.zero ]) in
+  let cle' = mul_by Q.zero cle in
+  Lin_expr.equal (expr cle') (Lin_expr.const Q.zero)
+  && List.length (constraints cle') = 2
+
 (* PRINT *)
 let%test "to_string empty constraints" =
   let cle = construct [] (Lin_expr.const Q.one) in

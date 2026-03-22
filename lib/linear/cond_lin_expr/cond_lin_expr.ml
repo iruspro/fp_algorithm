@@ -11,6 +11,7 @@ let expr cle = cle.expr
 let add_constraint cle ineq = construct (ineq :: constraints cle) (expr cle)
 let add_constraints cle ineqs = construct (constraints cle @ ineqs) (expr cle)
 let with_expr cle expr = construct (constraints cle) expr
+let mul_by q cle = construct (constraints cle) (Lin_expr.mul_by q (expr cle))
 
 (* PRINT *)
 let to_string cle =

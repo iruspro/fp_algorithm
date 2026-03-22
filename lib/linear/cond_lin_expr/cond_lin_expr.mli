@@ -34,6 +34,10 @@ val with_expr : t -> Lin_expr.t -> t
 (** [with_expr cle expr] returns a copy of [cle] with its expression replaced by
     [expr]. *)
 
+val mul_by : Q.t -> t -> t
+(** [mul_by q cle] returns a copy of [cle] with its expression multiplied by
+    [q], preserving the constraints. *)
+
 (** {2 Print} *)
 
 val to_string : t -> string

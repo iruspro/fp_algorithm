@@ -79,16 +79,9 @@ let rec eval dim term point =
         ]
       in
       Cond_lin_expr.construct ineqs x
-  (* TODO: Lin_expr.zero and Lin_expr.one without dim *)
   | Zero -> Cond_lin_expr.construct [] (Lin_expr.const Q.zero)
   | One -> Cond_lin_expr.construct [] (Lin_expr.const Q.one)
-  | Scm (q, term) ->
-      let cle = eval dim term point in
-
-      (* TODO: add Cond_lin_expr.mul_by *)
-      let constraints = Cond_lin_expr.constraints cle
-      and expr = Cond_lin_expr.expr cle in
-      Cond_lin_expr.construct constraints (Lin_expr.mul_by q expr)
+  | Scm (q, term) -> Cond_lin_expr.mul_by q (eval dim term point)
   | Lwd (term1, term2) ->
       let cle1 = eval dim term1 point and cle2 = eval dim term2 point in
 
