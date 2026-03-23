@@ -82,6 +82,17 @@ let substitute expr1 i expr2 =
     let q_i = coeff expr1 i in
     add (sub expr1 (mul_by q_i (x i))) (mul_by q_i expr2)
 
+let substitute_many expr indices subs =
+  let n = Array.length indices in
+  if n <> Array.length subs then
+    invalid_arg
+      "Lin_expr.substitute_many: indices and subs must have same length"
+  else
+    let rec aux e j =
+      if j >= n then e else aux (substitute e indices.(j) subs.(j)) (j + 1)
+    in
+    aux expr 0
+
 (* FUNCTIONS *)
 let eval expr point =
   let rec aux acc = function

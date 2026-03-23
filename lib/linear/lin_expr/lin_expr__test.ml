@@ -269,6 +269,31 @@ let%test "substitute negative index error" =
     false
   with Invalid_argument _ -> true
 
+let%test "substitute_many" =
+  (* 3x₂ + x₁ + 1, substitute x₁ := 2, x₂ := 5 => 15 + 2 + 1 = 18 *)
+  let expr = from_list [ Q.of_int 3; Q.one; Q.one ] in
+  let expr' =
+    substitute_many expr [| 1; 2 |] [| const (Q.of_int 2); const (Q.of_int 5) |]
+  in
+  equal expr' (const (Q.of_int 18))
+
+let%test "substitute_many single" =
+  let expr = from_list [ Q.one; Q.of_int 2 ] in
+  let expr' = substitute_many expr [| 1 |] [| const (Q.of_int 3) |] in
+  equal expr' (const (Q.of_int 5))
+
+let%test "substitute_many empty" =
+  let expr = from_list [ Q.one; Q.of_int 2 ] in
+  let expr' = substitute_many expr [||] [||] in
+  equal expr' expr
+
+let%test "substitute_many length mismatch raises" =
+  let expr = x 1 in
+  try
+    let _ = substitute_many expr [| 1; 2 |] [| const Q.zero |] in
+    false
+  with Invalid_argument _ -> true
+
 (* FUNCTIONS *)
 let%test "eval const" =
   let expr = const (Q.of_int 42)

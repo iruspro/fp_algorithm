@@ -64,6 +64,12 @@ val substitute : t -> int -> t -> t
 
     Raise [Invalid_argument] if {m i < 1}. *)
 
+val substitute_many : t -> int array -> t array -> t
+(** [substitute_many expr indices subs] substitutes
+    [x_{indices.(j)} := subs.(j)] for [j = 0, ..., len-1] in [expr].
+
+    Raise [Invalid_argument] if [indices] and [subs] have different lengths. *)
+
 (** {2 Functions} *)
 
 val eval : t -> Point.t -> Q.t
