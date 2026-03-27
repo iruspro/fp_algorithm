@@ -3,6 +3,7 @@ type t = { coords : Q.t list (* [r_n; ...; r_1] *) }
 (* CONSTRUCTORS *)
 let from_list coords = { coords = List.rev coords }
 let from_rev_list coords = { coords }
+let origin = { coords = [] }
 
 (* GETTERS *)
 let as_list point = List.rev point.coords
