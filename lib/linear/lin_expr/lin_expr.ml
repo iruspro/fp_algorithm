@@ -51,15 +51,6 @@ let coeff expr i =
     aux 0 (as_list expr)
 
 (* OPERATORS *)
-let equal expr1 expr2 =
-  let rec aux = function
-    | [], [] -> true
-    | [], _ | _, [] -> false
-    | q :: _, r :: _ when not (Q.equal q r) -> false
-    | _ :: qs, _ :: rs -> aux (qs, rs)
-  in
-  aux (as_rev_list expr1, as_rev_list expr2)
-
 let mul_by q expr = from_list (List.map (fun q_i -> Q.mul q q_i) (as_list expr))
 
 let add expr1 expr2 =
@@ -92,6 +83,22 @@ let substitute_many expr indices subs =
       if j >= n then e else aux (substitute e indices.(j) subs.(j)) (j + 1)
     in
     aux expr 0
+
+(* COMPARISON *)
+let compare expr1 expr2 =
+  let d1 = dim expr1 and d2 = dim expr2 in
+  if d1 <> d2 then Int.compare d1 d2
+  else
+    let rec aux = function
+      | [], [] -> 0
+      | q :: qs, r :: rs ->
+          let c = Q.compare q r in
+          if c <> 0 then c else aux (qs, rs)
+      | _, _ -> assert false
+    in
+    aux (as_list expr1, as_list expr2)
+
+let equal expr1 expr2 = compare expr1 expr2 = 0
 
 (* FUNCTIONS *)
 let eval expr point =

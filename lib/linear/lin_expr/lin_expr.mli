@@ -42,10 +42,6 @@ val coeff : t -> int -> Q.t
 
 (** {2 Operators} *)
 
-val equal : t -> t -> bool
-(** [equal expr1 expr2] returns [true] if {m expr1 = expr2} and [false]
-    otherwise. *)
-
 val mul_by : Q.t -> t -> t
 (** [mul_by q expr] returns the linear expression obtained by multiplying every
     coefficient of [expr] by [q]. *)
@@ -69,6 +65,16 @@ val substitute_many : t -> int array -> t array -> t
     [x_{indices.(j)} := subs.(j)] for [j = 0, ..., len-1] in [expr].
 
     Raise [Invalid_argument] if [indices] and [subs] have different lengths. *)
+
+(** {2 Comparison} *)
+
+val compare : t -> t -> int
+(** [compare expr1 expr2] total order on linear expressions: first by dimension,
+    then lexicographically by coefficients from highest to lowest. *)
+
+val equal : t -> t -> bool
+(** [equal expr1 expr2] returns [true] if {m expr1 = expr2} and [false]
+    otherwise. *)
 
 (** {2 Functions} *)
 
