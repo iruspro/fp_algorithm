@@ -4,7 +4,7 @@ type t = { lhs : Lin_expr.t; rhs : Lin_expr.t; rel : rel; dim : int }
 let rev_rel = function Lt -> Gt | Le -> Ge | Gt -> Lt | Ge -> Le
 let neg_rel = function Lt -> Ge | Le -> Gt | Gt -> Le | Ge -> Lt
 
-let compare val1 val2 = function
+let check_rel val1 val2 = function
   | Lt -> Q.lt val1 val2
   | Le -> Q.leq val1 val2
   | Gt -> Q.gt val1 val2
@@ -54,7 +54,7 @@ let substitute ineq i expr =
 let is_satisfied ineq point =
   let val1 = Lin_expr.eval (lhs ineq) point
   and val2 = Lin_expr.eval (rhs ineq) point in
-  compare val1 val2 (rel ineq)
+  check_rel val1 val2 (rel ineq)
 
 (* PRINT *)
 let rel_to_string = function Lt -> "<" | Le -> "≤" | Gt -> ">" | Ge -> "≥"
