@@ -50,6 +50,16 @@ val is_always_true : t -> bool
 (** [is_always_true ineq] returns [true] if [ineq] is a constant inequality
     ([dim = 0]) that holds unconditionally. *)
 
+(** {2 Comparison} *)
+
+val compare : t -> t -> int
+(** [compare ineq1 ineq2] total order on inequalities: first by dimension
+    (higher dim comes first), then by right-hand side, then by relation. *)
+
+val equal : t -> t -> bool
+(** [equal ineq1 ineq2] returns [true] if [ineq1] and [ineq2] have the same
+    dimension, right-hand side, and relation. *)
+
 (** {2 Print} *)
 
 val to_string : t -> string

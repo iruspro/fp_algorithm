@@ -58,6 +58,20 @@ let is_satisfied ineq point =
 
 let is_always_true ineq = dim ineq = 0 && is_satisfied ineq Point.origin
 
+(* COMPARISON *)
+let rel_to_int = function Lt -> 0 | Le -> 1 | Gt -> 2 | Ge -> 3
+
+let compare ineq1 ineq2 =
+  (* Higher dim comes first *)
+  let c = Int.compare (dim ineq2) (dim ineq1) in
+  if c <> 0 then c
+  else
+    let c = Lin_expr.compare (rhs ineq1) (rhs ineq2) in
+    if c <> 0 then c
+    else Int.compare (rel_to_int (rel ineq1)) (rel_to_int (rel ineq2))
+
+let equal ineq1 ineq2 = compare ineq1 ineq2 = 0
+
 (* PRINT *)
 let rel_to_string = function Lt -> "<" | Le -> "≤" | Gt -> ">" | Ge -> "≥"
 
