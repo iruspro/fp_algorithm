@@ -56,6 +56,8 @@ let is_satisfied ineq point =
   and val2 = Lin_expr.eval (rhs ineq) point in
   check_rel val1 val2 (rel ineq)
 
+let is_always_true ineq = dim ineq = 0 && is_satisfied ineq Point.origin
+
 (* PRINT *)
 let rel_to_string = function Lt -> "<" | Le -> "≤" | Gt -> ">" | Ge -> "≥"
 

@@ -46,6 +46,10 @@ val is_satisfied : t -> Point.t -> bool
 (** [is_satisfied ineq point] evaluates the inequality at [point] and returns
     [true] if it holds, and [false] otherwise. *)
 
+val is_always_true : t -> bool
+(** [is_always_true ineq] returns [true] if [ineq] is a constant inequality
+    ([dim = 0]) that holds unconditionally. *)
+
 (** {2 Print} *)
 
 val to_string : t -> string
